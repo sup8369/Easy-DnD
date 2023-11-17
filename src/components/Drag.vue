@@ -1,26 +1,29 @@
 <template>
-  <component :is="tag" v-bind="$attrs" v-on="$listeners" :class="cssClasses">
-    <slot></slot>
-    <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
-      <slot :name="slot" v-bind="scope" />
-    </template>
-    <div v-if="dragInitialised" class="__drag-image" ref="drag-image">
-      <slot name="drag-image"></slot>
-    </div>
-  </component>
+    <component :is="tag" v-bind="$attrs" v-on="$listeners"
+               :class="cssClasses">
+        <slot></slot>
+        <template v-for="(_, slot) of $scopedSlots" v-slot:[slot]="scope">
+            <slot :name="slot" v-bind="scope"/>
+        </template>
+        <div v-if="dragInitialised" class="__drag-image" ref="drag-image">
+            <slot name="drag-image"></slot>
+        </div>
+    </component>
 </template>
 
 <script lang="ts">
-import { Component, Prop } from "vue-property-decorator";
+import {Component, Prop} from "vue-property-decorator";
 import DragMixin from "../mixins/DragMixin";
 
 @Component({})
 export default class Drag extends DragMixin {
-  /**
-   * Tag to be used as root of this component. Defaults to div.
-   */
-  @Prop({ default: "div", type: [String, Object, Function] })
-  tag: any;
+
+    /**
+     * Tag to be used as root of this component. Defaults to div.
+     */
+    @Prop({default: 'div', type: [String, Object, Function]})
+    tag: any;
+
 }
 </script>
 
@@ -30,8 +33,7 @@ export default class Drag extends DragMixin {
 }
 
 .drop-forbidden.drop-in {
-  &,
-  * {
+  &, * {
     cursor: no-drop !important;
   }
 }
