@@ -522,7 +522,7 @@ function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
     // gets the viewport edge. As such, we'll calculate the percentage that
     // the user has made it "through the edge" when calculating the delta.
     // Then, that use that percentage to back-off from the "max" step value.
-    var maxStep = 5;
+    var maxStep = 1;
 
     // Should we scroll left?
     if (isInLeftEdge && canScrollLeft) {
