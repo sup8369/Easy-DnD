@@ -385,6 +385,7 @@ var scroll = function (node) {
 };
 
 var scrollparent = function (node) {
+  return
   return !node || node === document.body
     ? document.body
     : scroll(node)
@@ -401,7 +402,8 @@ function cancelScrollAction() {
   clearTimeout(timer);
 }
 
-function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
+function performEdgeScroll(event, container, clientX, clientY, edgeSize) {console.log("CANCEL 2")
+  return
   if (!container || !edgeSize) {
     cancelScrollAction();
     return false;
@@ -489,13 +491,15 @@ function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
     cancelScrollAction();
 
     if (adjustWindowScroll()) {
-      timer = setTimeout(checkForWindowScroll, 2);
+      timer = setTimeout(checkForWindowScroll, 1);
     }
   })();
 
   // Adjust the window scroll based on the user's mouse position. Returns True
   // or False depending on whether or not the window scroll was changed.
   function adjustWindowScroll() {
+    console.log("CANCEL 1")
+    return
     // Get the current scroll position of the document.
     var currentScrollX = container.scrollLeft;
     var currentScrollY = container.scrollTop;
@@ -504,48 +508,22 @@ function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
       currentScrollY = window.pageYOffset;
     }
 
-    // Determine if the window can be scrolled in any particular direction.
     var canScrollUp = currentScrollY > 0;
-    var canScrollDown = currentScrollY < maxScrollY;
-    var canScrollLeft = currentScrollX > 0;
-    var canScrollRight = currentScrollX < maxScrollX;
+    var canScrollDown = currentScrollY < maxScrollY; 
 
-    // Since we can potentially scroll in two directions at the same time,
-    // let's keep track of the next scroll, starting with the current scroll.
-    // Each of these values can then be adjusted independently in the logic
-    // below.
     var nextScrollX = currentScrollX;
     var nextScrollY = currentScrollY;
 
-    // As we examine the mouse position within the edge, we want to make the
-    // incremental scroll changes more "intense" the closer that the user
-    // gets the viewport edge. As such, we'll calculate the percentage that
-    // the user has made it "through the edge" when calculating the delta.
-    // Then, that use that percentage to back-off from the "max" step value.
-    var maxStep = 5;
-
-    // Should we scroll left?
-    if (isInLeftEdge && canScrollLeft) {
-      var intensity = (edgeLeft - viewportX) / edgeSize;
-      nextScrollX = nextScrollX - maxStep * intensity;
-    }
-    // Should we scroll right?
-    else if (isInRightEdge && canScrollRight) {
-      var intensity = (viewportX - edgeRight) / edgeSize;
-      nextScrollX = nextScrollX + maxStep * intensity;
-    }
-
-    // Should we scroll up?
+   
     if (isInTopEdge && canScrollUp) {
-      var intensity = (edgeTop - viewportY) / edgeSize;
-      nextScrollY = nextScrollY - maxStep * intensity;
+      nextScrollY = nextScrollY - 3;
     }
-    // Should we scroll down?
     else if (isInBottomEdge && canScrollDown) {
-      var intensity = (viewportY - edgeBottom) / edgeSize;
-      nextScrollY = nextScrollY + maxStep * intensity;
+      nextScrollY = nextScrollY + 3;
     }
 
+    console.log(nextScrollY)
+    maxScrollY = nextScrollY
     // Sanitize invalid maximums. An invalid scroll offset won't break the
     // subsequent .scrollTo() call; however, it will make it harder to
     // determine if the .scrollTo() method should have been called in the
@@ -554,7 +532,7 @@ function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
     nextScrollY = Math.max(0, Math.min(maxScrollY, nextScrollY));
 
     if (nextScrollX !== currentScrollX || nextScrollY !== currentScrollY) {
-      (isBody ? window : container).scrollTo(nextScrollX, nextScrollY);
+      // (isBody ? window : container).scrollTo(nextScrollX, nextScrollY);
       return true;
     } else {
       return false;
@@ -728,18 +706,18 @@ var DragMixin = /** @class */ (function (_super) {
       // If cursor/touch is at edge of container, perform scroll if available
       // If this.dragTop is defined, it means they are dragging on top of another DropList/EasyDnd component
       // if dropTop is a DropList, use the scrollingEdgeSize of that container if it exists, otherwise use the scrollingEdgeSize of the Drag component
-      var currEdgeSize =
-        this.dragTop && this.dragTop.$props.scrollingEdgeSize !== undefined
-          ? this.dragTop.$props.scrollingEdgeSize
-          : this.scrollingEdgeSize;
-      if (!!currEdgeSize) {
-        var currScrollContainer = this.dragTop
-          ? scrollparent(this.dragTop.$el)
-          : this.scrollContainer;
-        performEdgeScroll(e, currScrollContainer, x, y, currEdgeSize);
-      } else {
-        cancelScrollAction();
-      }
+      // var currEdgeSize =
+      //   this.dragTop && this.dragTop.$props.scrollingEdgeSize !== undefined
+      //     ? this.dragTop.$props.scrollingEdgeSize
+      //     : this.scrollingEdgeSize;
+      // if (!!currEdgeSize) {
+      //   var currScrollContainer = this.dragTop
+      //     ? scrollparent(this.dragTop.$el)
+      //     : this.scrollContainer;
+      //   performEdgeScroll(e, currScrollContainer, x, y, currEdgeSize);
+      // } else {
+      //   cancelScrollAction();
+      // }
       var custom = new CustomEvent("easy-dnd-move", {
         bubbles: true,
         cancelable: true,
@@ -1895,6 +1873,7 @@ var Grid = /** @class */ (function () {
         this.reference.getBoundingClientRect().left - this.reference.scrollLeft,
       y: this.reference.getBoundingClientRect().top - this.reference.scrollTop,
     };
+    console.log(this.referenceOriginalPosition)
     var index = 0;
     try {
       for (
@@ -2012,6 +1991,7 @@ var Grid = /** @class */ (function () {
     };
   };
   Grid.prototype.closestIndex = function (position) {
+    
     var x = position.x - this.correction().x;
     var y = position.y - this.correction().y;
     var minDist = 999999;
@@ -2026,6 +2006,7 @@ var Grid = /** @class */ (function () {
         index = i;
       }
     }
+    console.log("WOW", index)
     return index;
   };
   return Grid;
@@ -2254,6 +2235,7 @@ var DropList = /** @class */ (function (_super) {
       var temp = reordered[this.fromIndex];
       reordered.splice(this.fromIndex, 1);
       reordered.splice(toIndex, 0, temp);
+      console.log(this.closestIndex, this.fromIndex)
       return reordered;
     },
     enumerable: true,
@@ -2313,6 +2295,7 @@ var DropList = /** @class */ (function (_super) {
   DropList.prototype.doDrop = function (event) {
     if (this.reordering) {
       if (this.fromIndex !== this.closestIndex) {
+        
         this.$emit(
           "reorder",
           new ReorderEvent(this.fromIndex, this.closestIndex)
@@ -2332,7 +2315,7 @@ var DropList = /** @class */ (function (_super) {
       DropMixin["options"].methods.candidate).call.apply(
       _a,
       __spread([this], arguments)
-    );
+    ); 
     return (
       (superCandidate &&
         (this.$listeners.hasOwnProperty("insert") ||

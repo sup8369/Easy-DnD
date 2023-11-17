@@ -561,7 +561,7 @@ function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
     nextScrollY = Math.max(0, Math.min(maxScrollY, nextScrollY));
 
     if (nextScrollX !== currentScrollX || nextScrollY !== currentScrollY) {
-      (isBody ? window : container).scrollTo(nextScrollX, nextScrollY);
+      // (isBody ? window : container).scrollTo(nextScrollX, nextScrollY);
       return true;
     } else {
       return false;
