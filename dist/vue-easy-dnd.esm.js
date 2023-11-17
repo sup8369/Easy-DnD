@@ -1,223 +1,396 @@
-import { reactive, openBlock, createBlock, resolveDynamicComponent, normalizeClass, createSlots, withCtx, renderSlot, normalizeProps, guardReactiveProps, createElementBlock, createCommentVNode, renderList, TransitionGroup, h, nextTick } from 'vue';
+import "reflect-metadata";
+import { Vue, Component, Prop } from "vue-property-decorator";
 
-function mitt(n){return {all:n=n||new Map,on:function(t,e){var i=n.get(t);i?i.push(e):n.set(t,[e]);},off:function(t,e){var i=n.get(t);i&&(e?i.splice(i.indexOf(e)>>>0,1):n.set(t,[]));},emit:function(t,e){var i=n.get(t);i&&i.slice().map(function(n){n(e);}),(i=n.get("*"))&&i.slice().map(function(n){n(t,e);});}}}
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+/* global Reflect, Promise */
+
+var extendStatics = function (d, b) {
+  extendStatics =
+    Object.setPrototypeOf ||
+    ({ __proto__: [] } instanceof Array &&
+      function (d, b) {
+        d.__proto__ = b;
+      }) ||
+    function (d, b) {
+      for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    };
+  return extendStatics(d, b);
+};
+
+function __extends(d, b) {
+  extendStatics(d, b);
+  function __() {
+    this.constructor = d;
+  }
+  d.prototype =
+    b === null ? Object.create(b) : ((__.prototype = b.prototype), new __());
+}
+
+var __assign = function () {
+  __assign =
+    Object.assign ||
+    function __assign(t) {
+      for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s)
+          if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+      }
+      return t;
+    };
+  return __assign.apply(this, arguments);
+};
+
+function __decorate(decorators, target, key, desc) {
+  var c = arguments.length,
+    r =
+      c < 3
+        ? target
+        : desc === null
+        ? (desc = Object.getOwnPropertyDescriptor(target, key))
+        : desc,
+    d;
+  if (typeof Reflect === "object" && typeof Reflect.decorate === "function")
+    r = Reflect.decorate(decorators, target, key, desc);
+  else
+    for (var i = decorators.length - 1; i >= 0; i--)
+      if ((d = decorators[i]))
+        r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+  return c > 3 && r && Object.defineProperty(target, key, r), r;
+}
+
+function __metadata(metadataKey, metadataValue) {
+  if (typeof Reflect === "object" && typeof Reflect.metadata === "function")
+    return Reflect.metadata(metadataKey, metadataValue);
+}
+
+function __values(o) {
+  var m = typeof Symbol === "function" && o[Symbol.iterator],
+    i = 0;
+  if (m) return m.call(o);
+  return {
+    next: function () {
+      if (o && i >= o.length) o = void 0;
+      return { value: o && o[i++], done: !o };
+    },
+  };
+}
+
+function __read(o, n) {
+  var m = typeof Symbol === "function" && o[Symbol.iterator];
+  if (!m) return o;
+  var i = m.call(o),
+    r,
+    ar = [],
+    e;
+  try {
+    while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+  } catch (error) {
+    e = { error: error };
+  } finally {
+    try {
+      if (r && !r.done && (m = i["return"])) m.call(i);
+    } finally {
+      if (e) throw e.error;
+    }
+  }
+  return ar;
+}
+
+function __spread() {
+  for (var ar = [], i = 0; i < arguments.length; i++)
+    ar = ar.concat(__read(arguments[i]));
+  return ar;
+}
 
 /**
  * This is the class of the global object that holds the state of the drag and drop during its progress. It emits events
  * reporting its state evolution during the progress of the drag and drop. Its data is reactive and listeners can be
- * attached to it using the method on.
+ * attachted to it using the method on.
  */
-class DnD {
-
-    inProgress = false;
-    type = null;
-    data = null;
-    source = null;
-    top = null;
-    position = null;
-    eventBus = mitt();
-    success = null;
-
-    startDrag (source, event, x, y, type, data) {
-      this.type = type;
-      this.data = data;
-      this.source = source;
-      this.position = { x, y };
-      this.top = null;
-      this.inProgress = true;
-      this.emit(event, 'dragstart');
-      this.emit(event, 'dragtopchanged', { previousTop: null });
+var DnD = /** @class */ (function () {
+  function DnD() {
+    this.inProgress = false;
+    this.type = null;
+    this.data = null;
+    this.source = null;
+    this.top = null;
+    this.position = null;
+    this.eventBus = new Vue();
+    this.sourceListeners = null;
+    this.success = null;
+  }
+  DnD.prototype.startDrag = function (source, event, x, y, type, data) {
+    this.type = type;
+    this.data = data;
+    this.source = source;
+    this.position = { x: x, y: y };
+    this.top = null;
+    this.sourceListeners = source.$listeners;
+    this.inProgress = true;
+    this.emit(event, "dragstart");
+    this.emit(event, "dragtopchanged", { previousTop: null });
+  };
+  DnD.prototype.resetVariables = function () {
+    this.inProgress = false;
+    this.data = null;
+    this.source = null;
+    this.position = null;
+    this.success = null;
+  };
+  DnD.prototype.stopDrag = function (event) {
+    this.success =
+      this.top !== null &&
+      this.top["compatibleMode"] &&
+      this.top["dropAllowed"];
+    if (this.top !== null) {
+      this.emit(event, "drop");
     }
-
-    resetVariables () {
-      this.inProgress = false;
-      this.data = null;
-      this.source = null;
-      this.position = null;
-      this.success = null;
-    }
-
-    stopDrag (event) {
-      this.success = this.top !== null && this.top['compatibleMode'] && this.top['dropAllowed'];
-      if (this.top !== null) {
-        this.emit(event, 'drop');
+    this.emit(event, "dragend");
+    this.resetVariables();
+  };
+  DnD.prototype.cancelDrag = function (event) {
+    this.success = false;
+    this.emit(event, "dragend");
+    this.resetVariables();
+  };
+  DnD.prototype.mouseMove = function (event, comp) {
+    if (this.inProgress) {
+      var prevent = false;
+      var previousTop = this.top;
+      if (comp === null) {
+        // The mouse move event reached the top of the document without hitting a drop component.
+        this.top = null;
+        prevent = true;
+      } else if (comp["isDropMask"]) {
+        // The mouse move event bubbled until it reached a drop mask.
+        this.top = null;
+        prevent = true;
+      } else if (comp["candidate"](this.type, this.data, this.source)) {
+        // The mouse move event bubbled until it reached a drop component that participates in the current drag operation.
+        this.top = comp;
+        prevent = true;
       }
-      this.emit(event, 'dragend');
-      this.resetVariables();
-    }
-
-    cancelDrag (event) {
-      this.success = false;
-      this.emit(event, 'dragend');
-      this.resetVariables();
-    }
-
-    mouseMove (event, comp) {
-      if (this.inProgress) {
-        let prevent = false;
-        const previousTop = this.top;
-        if (comp === null) {
-          // The mouse move event reached the top of the document without hitting a drop component.
-          this.top = null;
-          prevent = true;
-        }
-        else if (comp['isDropMask']) {
-          // The mouse move event bubbled until it reached a drop mask.
-          this.top = null;
-          prevent = true;
-        }
-        else if (comp['candidate'](this.type, this.data, this.source)) {
-          // The mouse move event bubbled until it reached a drop component that participates in the current drag operation.
-          this.top = comp;
-          prevent = true;
-        }
-
-        if (prevent) {
-          // We prevent the mouse move event from bubbling further up the tree because it reached the foremost drop component and that component is all that matters.
-          event.stopPropagation();
-        }
-        if (this.top !== previousTop) {
-          this.emit(event.detail.native, 'dragtopchanged', { previousTop: previousTop });
-        }
-        this.position = {
-          x: event.detail.x,
-          y: event.detail.y
-        };
-        this.emit(event.detail.native, 'dragpositionchanged');
+      if (prevent) {
+        // We prevent the mouse move event from bubbling further up the tree because it reached the foremost drop component and that component is all that matters.
+        event.stopPropagation();
       }
+      if (this.top !== previousTop) {
+        this.emit(event.detail.native, "dragtopchanged", {
+          previousTop: previousTop,
+        });
+      }
+      this.position = {
+        x: event.detail.x,
+        y: event.detail.y,
+      };
+      this.emit(event.detail.native, "dragpositionchanged");
     }
+  };
+  DnD.prototype.emit = function (native, event, data) {
+    this.eventBus.$emit(
+      event,
+      __assign(
+        {
+          type: this.type,
+          data: this.data,
+          top: this.top,
+          source: this.source,
+          position: this.position,
+          success: this.success,
+          native: native,
+        },
+        data
+      )
+    );
+  };
+  DnD.prototype.on = function (event, callback) {
+    this.eventBus.$on(event, callback);
+  };
+  DnD.prototype.off = function (event, callback) {
+    this.eventBus.$off(event, callback);
+  };
+  return DnD;
+})();
+var dnd = new DnD();
+dnd = Vue.observable(dnd);
 
-    emit (native, event, data = {}) {
-      this.eventBus.emit(event, {
-        type: this.type,
-        data: this.data,
-        top: this.top,
-        source: this.source,
-        position: this.position,
-        success: this.success,
-        native,
-        ...data
-      });
-    }
-
-    on (event, callback) {
-      this.eventBus.on(event, callback);
-    }
-
-    off (event, callback) {
-      this.eventBus.off(event, callback);
-    }
-}
-
-const dnd = reactive(new DnD());
-
-var DragAwareMixin = {
-  data () {
-    return {
-      isDropMask: false
-    };
-  },
-  computed: {
-    dragInProgress () {
+var DragAwareMixin = /** @class */ (function (_super) {
+  __extends(DragAwareMixin, _super);
+  function DragAwareMixin() {
+    return (_super !== null && _super.apply(this, arguments)) || this;
+  }
+  Object.defineProperty(DragAwareMixin.prototype, "dragInProgress", {
+    get: function () {
       return dnd.inProgress;
     },
-    dragData () {
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DragAwareMixin.prototype, "dragData", {
+    get: function () {
       return dnd.data;
     },
-    dragType () {
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DragAwareMixin.prototype, "dragType", {
+    get: function () {
       return dnd.type;
     },
-    dragPosition () {
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DragAwareMixin.prototype, "dragPosition", {
+    get: function () {
       return dnd.position;
     },
-    dragSource () {
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DragAwareMixin.prototype, "dragSource", {
+    get: function () {
       return dnd.source;
     },
-    dragTop () {
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DragAwareMixin.prototype, "dragTop", {
+    get: function () {
       return dnd.top;
-    }
-  }
-};
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  DragAwareMixin = __decorate([Component({})], DragAwareMixin);
+  return DragAwareMixin;
+})(Vue);
 
 /**
  * This files contains the primitives required to create drag images from HTML elements that serve as models. A snapshot
  * of the computed styles of the model elements is taken when creating the drag image, so that it will look the same as
  * the model, no matter where the drag images is grafted into the DOM.
  */
-
 /**
  * Creates a drag image using the given element as model.
  */
-function createDragImage (el) {
-  const clone = deepClone(el);
-  clone.style.position = 'fixed';
-  clone.style.margin = '0';
-  clone.style['z-index'] = '1000';
-  clone.style.transition = 'opacity 0.2s';
+function createDragImage(el) {
+  var clone = deepClone(el);
+  clone.style.position = "fixed";
+  clone.style.margin = "0";
+  clone.style["z-index"] = "1000";
+  clone.style.transition = "opacity 0.2s";
   return clone;
 }
-
 /**
  * Clones the given element and all its descendants.
  */
-function deepClone (el) {
-  const clone = el.cloneNode(true);
+function deepClone(el) {
+  var clone = el.cloneNode(true);
   copyStyle(el, clone);
-  const vSrcElements = el.getElementsByTagName('*');
-  const vDstElements = clone.getElementsByTagName('*');
-  for (let i = vSrcElements.length; i--;) {
-    const vSrcElement = vSrcElements[i];
-    const vDstElement = vDstElements[i];
+  var vSrcElements = el.getElementsByTagName("*");
+  var vDstElements = clone.getElementsByTagName("*");
+  for (var i = vSrcElements.length; i--; ) {
+    var vSrcElement = vSrcElements[i];
+    var vDstElement = vDstElements[i];
     copyStyle(vSrcElement, vDstElement);
   }
   return clone;
 }
-
 /**
  * Copy the computed styles from src to destination.
  */
-function copyStyle (src, destination) {
-  const computedStyle = window.getComputedStyle(src);
-  for (const key of computedStyle) {
-    if (key === 'width') {
-      // IE11
-      const width = computedStyle.getPropertyValue('box-sizing') === 'border-box' ?
-        src.clientWidth :
-        src.clientWidth - parseFloat(computedStyle.paddingLeft) - parseFloat(computedStyle.paddingRight);
-      destination.style.setProperty('width', width + 'px');
+function copyStyle(src, destination) {
+  var e_1, _a;
+  var computedStyle = window.getComputedStyle(src);
+  try {
+    for (
+      var computedStyle_1 = __values(computedStyle),
+        computedStyle_1_1 = computedStyle_1.next();
+      !computedStyle_1_1.done;
+      computedStyle_1_1 = computedStyle_1.next()
+    ) {
+      var key = computedStyle_1_1.value;
+      if (key === "width") {
+        // IE11
+        var width =
+          computedStyle.getPropertyValue("box-sizing") === "border-box"
+            ? src.clientWidth
+            : src.clientWidth -
+              parseFloat(computedStyle.paddingLeft) -
+              parseFloat(computedStyle.paddingRight);
+        destination.style.setProperty("width", width + "px");
+      } else if (key === "height") {
+        // IE11
+        var height =
+          computedStyle.getPropertyValue("box-sizing") === "border-box"
+            ? src.clientHeight
+            : src.clientHeight -
+              parseFloat(computedStyle.paddingTop) -
+              parseFloat(computedStyle.paddingBottom);
+        destination.style.setProperty("height", height + "px");
+      } else {
+        destination.style.setProperty(
+          key,
+          computedStyle.getPropertyValue(key),
+          computedStyle.getPropertyPriority(key)
+        );
+      }
     }
-    else if (key === 'height') {
-      // IE11
-      const height = computedStyle.getPropertyValue('box-sizing') === 'border-box' ?
-        src.clientHeight :
-        src.clientHeight - parseFloat(computedStyle.paddingTop) - parseFloat(computedStyle.paddingBottom);
-      destination.style.setProperty('height', height + 'px');
-    }
-    else {
-      destination.style.setProperty(key, computedStyle.getPropertyValue(key), computedStyle.getPropertyPriority(key));
+  } catch (e_1_1) {
+    e_1 = { error: e_1_1 };
+  } finally {
+    try {
+      if (
+        computedStyle_1_1 &&
+        !computedStyle_1_1.done &&
+        (_a = computedStyle_1.return)
+      ) {
+        _a.call(computedStyle_1);
+      }
+    } finally {
+      if (e_1) {
+        throw e_1.error;
+      }
     }
   }
-  destination.style.pointerEvents = 'none';
+  destination.style.pointerEvents = "none";
 }
 
 // Forked from https://gist.github.com/gre/296291b8ce0d8fe6e1c3ea4f1d1c5c3b
-const regex = /(auto|scroll)/;
+var regex = /(auto|scroll)/;
 
-const style = (node, prop) =>
-  getComputedStyle(node, null).getPropertyValue(prop);
+var style = function (node, prop) {
+  return getComputedStyle(node, null).getPropertyValue(prop);
+};
 
-const scroll = (node) =>
-  regex.test(
-    style(node, 'overflow') +
-    style(node, 'overflow-y') +
-    style(node, 'overflow-x'));
+var scroll = function (node) {
+  return regex.test(
+    style(node, "overflow") +
+      style(node, "overflow-y") +
+      style(node, "overflow-x")
+  );
+};
 
-const scrollparent = (node) =>
-  !node || node===document.body
+var scrollparent = function (node) {
+  return !node || node === document.body
     ? document.body
     : scroll(node)
-      ? node
-      : scrollparent(node.parentNode);
+    ? node
+    : scrollparent(node.parentNode);
+};
 
 // Forked from https://github.com/bennadel/JavaScript-Demos/blob/master/demos/window-edge-scrolling/index.htm
 // Code was altered to work with scrollable containers
@@ -228,13 +401,7 @@ function cancelScrollAction() {
   clearTimeout(timer);
 }
 
-function performEdgeScroll(
-  event,
-  container,
-  clientX,
-  clientY,
-  edgeSize
-) {
+function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
   if (!container || !edgeSize) {
     cancelScrollAction();
     return false;
@@ -359,23 +526,23 @@ function performEdgeScroll(
 
     // Should we scroll left?
     if (isInLeftEdge && canScrollLeft) {
-      const intensity = (edgeLeft - viewportX) / edgeSize;
+      var intensity = (edgeLeft - viewportX) / edgeSize;
       nextScrollX = nextScrollX - maxStep * intensity;
     }
     // Should we scroll right?
     else if (isInRightEdge && canScrollRight) {
-      const intensity = (viewportX - edgeRight) / edgeSize;
+      var intensity = (viewportX - edgeRight) / edgeSize;
       nextScrollX = nextScrollX + maxStep * intensity;
     }
 
     // Should we scroll up?
     if (isInTopEdge && canScrollUp) {
-      const intensity = (edgeTop - viewportY) / edgeSize;
+      var intensity = (edgeTop - viewportY) / edgeSize;
       nextScrollY = nextScrollY - maxStep * intensity;
     }
     // Should we scroll down?
     else if (isInBottomEdge && canScrollDown) {
-      const intensity = (viewportY - edgeBottom) / edgeSize;
+      var intensity = (viewportY - edgeBottom) / edgeSize;
       nextScrollY = nextScrollY + maxStep * intensity;
     }
 
@@ -397,1447 +564,2115 @@ function performEdgeScroll(
   return true;
 }
 
-var DragMixin = {
-  mixins: [DragAwareMixin],
-  props: {
-    type: {
-      type: String,
-      default: null
-    },
-    data: {
-      default: null
-    },
-    dragImageOpacity: {
-      type: Number,
-      default: 0.7
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    goBack: {
-      type: Boolean,
-      default: false
-    },
-    handle: {
-      type: String,
-      default: null
-    },
-    delta: {
-      type: Number,
-      default: 0
-    },
-    delay: {
-      type: Number,
-      default: 0
-    },
-    dragClass: {
-      type: String,
-      default: null
-    },
-    vibration: {
-      type: Number,
-      default: 0
-    },
-    scrollingEdgeSize: {
-      type: Number,
-      default: 100
+var DragMixin = /** @class */ (function (_super) {
+  __extends(DragMixin, _super);
+  function DragMixin() {
+    var _this = (_super !== null && _super.apply(this, arguments)) || this;
+    _this.dragInitialised = false;
+    _this.dragStarted = false;
+    _this.ignoreNextClick = false;
+    _this.initialUserSelect = null;
+    _this.downEvent = null;
+    _this.startPosition = null;
+    _this.delayTimer = null;
+    _this.scrollContainer = null;
+    return _this;
+  }
+  DragMixin.prototype.onSelectStart = function (e) {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+  DragMixin.prototype.performVibration = function () {
+    // If browser can perform vibration and user has defined a vibration, perform it
+    if (this.vibration > 0 && window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(this.vibration);
     }
-  },
-  emits: ['dragstart', 'dragend', 'cut', 'copy'],
-  data () {
-    return {
-      dragInitialised: false,
-      dragStarted: false,
-      ignoreNextClick: false,
-      initialUserSelect: null,
-      downEvent: null,
-      startPosition: null,
-      delayTimer: null,
-      scrollContainer: null
-    };
-  },
-  computed: {
-    cssClasses () {
-      const clazz = {
-        'dnd-drag': true
+  };
+  DragMixin.prototype.onMouseDown = function (e) {
+    var _this = this;
+    var target;
+    var goodButton;
+    if (e.type === "mousedown") {
+      var mouse = e;
+      target = e.target;
+      goodButton = mouse.buttons === 1;
+    } else {
+      var touch = e;
+      target = touch.touches[0].target;
+      goodButton = true;
+    }
+    if (this.disabled || this.downEvent !== null || !goodButton) {
+      return;
+    }
+    // Check that the target element is eligible for starting a drag
+    // Includes checking against the handle selector
+    //   or whether the element contains 'dnd-no-drag' class (which should disable dragging from that
+    //   sub-element of a draggable parent)
+    var goodTarget =
+      !target.matches(".dnd-no-drag, .dnd-no-drag *") &&
+      (!this.handle || target.matches(this.handle + ", " + this.handle + " *"));
+    if (!goodTarget) {
+      return;
+    }
+    this.scrollContainer = scrollparent(target);
+    this.initialUserSelect = document.body.style.userSelect;
+    document.documentElement.style.userSelect = "none"; // Permet au drag de se poursuivre normalement même
+    // quand on quitte un élémént avec overflow: hidden.
+    this.dragStarted = false;
+    this.downEvent = e;
+    if (this.downEvent.type === "mousedown") {
+      var mouse = event;
+      this.startPosition = {
+        x: mouse.clientX,
+        y: mouse.clientY,
+      };
+    } else {
+      var touch = event;
+      this.startPosition = {
+        x: touch.touches[0].clientX,
+        y: touch.touches[0].clientY,
+      };
+    }
+    if (!!this.delay) {
+      this.dragInitialised = false;
+      clearTimeout(this.delayTimer);
+      this.delayTimer = setTimeout(function () {
+        _this.dragInitialised = true;
+        _this.performVibration();
+      }, this.delay);
+    } else {
+      this.dragInitialised = true;
+      this.performVibration();
+    }
+    document.addEventListener("click", this.onMouseClick, true);
+    document.addEventListener("mouseup", this.onMouseUp);
+    document.addEventListener("touchend", this.onMouseUp);
+    document.addEventListener("selectstart", this.onSelectStart);
+    document.addEventListener("keyup", this.onKeyUp);
+    setTimeout(function () {
+      document.addEventListener("mousemove", _this.onMouseMove);
+      document.addEventListener("touchmove", _this.onMouseMove, {
+        passive: false,
+      });
+      document.addEventListener("easy-dnd-move", _this.onEasyDnDMove);
+    }, 0);
+    // Prevents event from bubbling to ancestor drag components and initiate several drags at the same time
+    e.stopPropagation();
+  };
+  // Prevent the user from accidentally causing a click event
+  // if they have just attempted a drag event
+  DragMixin.prototype.onMouseClick = function (e) {
+    if (this.ignoreNextClick) {
+      e.preventDefault();
+      e.stopPropagation && e.stopPropagation();
+      e.stopImmediatePropagation && e.stopImmediatePropagation();
+      this.ignoreNextClick = false;
+      return false;
+    }
+  };
+  DragMixin.prototype.onMouseMove = function (e) {
+    // We ignore the mousemove event that follows touchend :
+    if (this.downEvent === null) {
+      return;
+    }
+    // On touch devices, we ignore fake mouse events and deal with touch events only.
+    if (this.downEvent.type === "touchstart" && e.type === "mousemove") {
+      return;
+    }
+    // Find out event target and pointer position :
+    var target;
+    var x;
+    var y;
+    if (e.type === "touchmove") {
+      var touch = e;
+      x = touch.touches[0].clientX;
+      y = touch.touches[0].clientY;
+      target = document.elementFromPoint(x, y);
+      if (!target) {
+        // Mouse going off screen. Ignore event.
+        return;
+      }
+    } else {
+      var mouse = e;
+      x = mouse.clientX;
+      y = mouse.clientY;
+      target = mouse.target;
+    }
+    // Distance between current event and start position :
+    var dist = Math.sqrt(
+      Math.pow(this.startPosition.x - x, 2) +
+        Math.pow(this.startPosition.y - y, 2)
+    );
+    // If the drag has not begun yet and distance from initial point is greater than delta, we start the drag :
+    if (!this.dragStarted && dist > this.delta) {
+      // If they have dragged greater than the delta before the delay period has ended,
+      // It means that they attempted to perform another action (such as scrolling) on the page
+      if (!this.dragInitialised) {
+        clearTimeout(this.delayTimer);
+      } else {
+        this.ignoreNextClick = true;
+        this.dragStarted = true;
+        dnd.startDrag(
+          this,
+          this.downEvent,
+          this.startPosition.x,
+          this.startPosition.y,
+          this.type,
+          this.data
+        );
+        document.documentElement.classList.add("drag-in-progress");
+      }
+    }
+    // Dispatch custom easy-dnd-move event :
+    if (this.dragStarted) {
+      // If cursor/touch is at edge of container, perform scroll if available
+      // If this.dragTop is defined, it means they are dragging on top of another DropList/EasyDnd component
+      // if dropTop is a DropList, use the scrollingEdgeSize of that container if it exists, otherwise use the scrollingEdgeSize of the Drag component
+      var currEdgeSize =
+        this.dragTop && this.dragTop.$props.scrollingEdgeSize !== undefined
+          ? this.dragTop.$props.scrollingEdgeSize
+          : this.scrollingEdgeSize;
+      if (!!currEdgeSize) {
+        var currScrollContainer = this.dragTop
+          ? scrollparent(this.dragTop.$el)
+          : this.scrollContainer;
+        performEdgeScroll(e, currScrollContainer, x, y, currEdgeSize);
+      } else {
+        cancelScrollAction();
+      }
+      var custom = new CustomEvent("easy-dnd-move", {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+          x: x,
+          y: y,
+          native: e,
+        },
+      });
+      target.dispatchEvent(custom);
+    }
+    // Prevent scroll on touch devices if they were performing a drag
+    if (this.dragInitialised && e.cancelable) {
+      e.preventDefault();
+    }
+  };
+  DragMixin.prototype.onEasyDnDMove = function (e) {
+    dnd.mouseMove(e, null);
+  };
+  DragMixin.prototype.onMouseUp = function (e) {
+    var _this = this;
+    // On touch devices, we ignore fake mouse events and deal with touch events only.
+    if (this.downEvent.type === "touchstart" && e.type === "mouseup") {
+      return;
+    }
+    // This delay makes sure that when the click event that results from the mouseup is produced, the drag is
+    // still in progress. So by checking the flag dnd.inProgress, one can tell apart true clicks from drag and
+    // drop artefacts.
+    setTimeout(function () {
+      _this.cancelDragActions();
+      if (_this.dragStarted) {
+        dnd.stopDrag(e);
+      }
+      _this.finishDrag();
+    }, 0);
+  };
+  DragMixin.prototype.onKeyUp = function (e) {
+    var _this = this;
+    // If ESC is pressed, cancel the drag
+    if (e.key === "Escape") {
+      this.cancelDragActions();
+      setTimeout(function () {
+        dnd.cancelDrag(e);
+        _this.finishDrag();
+      }, 0);
+    }
+  };
+  DragMixin.prototype.cancelDragActions = function () {
+    this.dragInitialised = false;
+    clearTimeout(this.delayTimer);
+    cancelScrollAction();
+  };
+  DragMixin.prototype.finishDrag = function () {
+    this.downEvent = null;
+    this.scrollContainer = null;
+    if (this.dragStarted) {
+      document.documentElement.classList.remove("drag-in-progress");
+    }
+    document.removeEventListener("click", this.onMouseClick, true);
+    document.removeEventListener("mousemove", this.onMouseMove);
+    document.removeEventListener("touchmove", this.onMouseMove);
+    document.removeEventListener("easy-dnd-move", this.onEasyDnDMove);
+    document.removeEventListener("mouseup", this.onMouseUp);
+    document.removeEventListener("touchend", this.onMouseUp);
+    document.removeEventListener("selectstart", this.onSelectStart);
+    document.removeEventListener("keyup", this.onKeyUp);
+    document.documentElement.style.userSelect = this.initialUserSelect;
+  };
+  DragMixin.prototype.dndDragStart = function (ev) {
+    if (ev.source === this) {
+      this.$emit("dragstart", ev);
+    }
+  };
+  DragMixin.prototype.dndDragEnd = function (ev) {
+    if (ev.source === this) {
+      this.$emit("dragend", ev);
+    }
+  };
+  DragMixin.prototype.created = function () {
+    dnd.on("dragstart", this.dndDragStart);
+    dnd.on("dragend", this.dndDragEnd);
+  };
+  DragMixin.prototype.mounted = function () {
+    this.$el.addEventListener("mousedown", this.onMouseDown);
+    this.$el.addEventListener("touchstart", this.onMouseDown);
+  };
+  DragMixin.prototype.beforeDestroy = function () {
+    dnd.off("dragstart", this.dndDragStart);
+    dnd.off("dragend", this.dndDragEnd);
+    this.$el.removeEventListener("mousedown", this.onMouseDown);
+    this.$el.removeEventListener("touchstart", this.onMouseDown);
+  };
+  Object.defineProperty(DragMixin.prototype, "cssClasses", {
+    get: function () {
+      var clazz = {
+        "dnd-drag": true,
       };
       if (!this.disabled) {
-        return {
-          ...clazz,
-          'drag-source': this.dragInProgress && this.dragSource === this,
-          'drag-mode-copy': this.currentDropMode === 'copy',
-          'drag-mode-cut': this.currentDropMode === 'cut',
-          'drag-mode-reordering': this.currentDropMode === 'reordering',
-          'drag-no-handle': !this.handle
-        };
-      }
-      else {
+        return __assign(__assign({}, clazz), {
+          "drag-source": this.dragInProgress && this.dragSource === this,
+          "drag-mode-copy": this.currentDropMode === "copy",
+          "drag-mode-cut": this.currentDropMode === "cut",
+          "drag-mode-reordering": this.currentDropMode === "reordering",
+          "drag-no-handle": !this.handle,
+        });
+      } else {
         return clazz;
       }
     },
-    currentDropMode () {
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DragMixin.prototype, "currentDropMode", {
+    get: function () {
       if (this.dragInProgress && this.dragSource === this) {
-        if (this.dragTop && this.dragTop['dropAllowed']) {
-          if (this.dragTop['reordering']) {
-            return 'reordering';
+        if (this.dragTop && this.dragTop["dropAllowed"]) {
+          if (this.dragTop["reordering"]) {
+            return "reordering";
+          } else {
+            return this.dragTop["mode"];
           }
-          else {
-            return this.dragTop['mode'];
-          }
-        }
-        else {
+        } else {
           return null;
         }
-      }
-      else {
+      } else {
         return null;
       }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  DragMixin.prototype.createDragImage = function (selfTransform) {
+    var image;
+    if (this.$scopedSlots["drag-image"]) {
+      var el = this.$refs["drag-image"] || document.createElement("div");
+      if (el.childElementCount !== 1) {
+        image = createDragImage(el);
+      } else {
+        image = createDragImage(el.children.item(0));
+      }
+    } else {
+      image = createDragImage(this.$el);
+      image.style.transform = selfTransform;
     }
-  },
-  methods: {
-    onSelectStart (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    },
-    performVibration () {
-      // If browser can perform vibration and user has defined a vibration, perform it
-      if (this.vibration > 0 && window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(this.vibration);
-      }
-    },
-    onMouseDown (e) {
-      let target = null;
-      let goodButton = false;
-      if (e.type === 'mousedown') {
-        const mouse = e;
-        target = e.target;
-        goodButton = mouse.buttons === 1;
-      }
-      else {
-        const touch = e;
-        target = touch.touches[0].target;
-        goodButton = true;
-      }
+    if (this.dragClass) {
+      image.classList.add(this.dragClass);
+    }
+    image.classList.add("dnd-ghost");
+    image["__opacity"] = this.dragImageOpacity;
+    return image;
+  };
+  __decorate(
+    [Prop({ default: null, type: null }), __metadata("design:type", String)],
+    DragMixin.prototype,
+    "type",
+    void 0
+  );
+  __decorate(
+    [Prop({ default: null, type: null }), __metadata("design:type", Object)],
+    DragMixin.prototype,
+    "data",
+    void 0
+  );
+  __decorate(
+    [Prop({ default: 0.7, type: Number }), __metadata("design:type", Object)],
+    DragMixin.prototype,
+    "dragImageOpacity",
+    void 0
+  );
+  __decorate(
+    [
+      Prop({ default: false, type: Boolean }),
+      __metadata("design:type", Boolean),
+    ],
+    DragMixin.prototype,
+    "disabled",
+    void 0
+  );
+  __decorate(
+    [
+      Prop({ default: false, type: Boolean }),
+      __metadata("design:type", Boolean),
+    ],
+    DragMixin.prototype,
+    "goBack",
+    void 0
+  );
+  __decorate(
+    [
+      Prop({ required: false, type: String }),
+      __metadata("design:type", String),
+    ],
+    DragMixin.prototype,
+    "handle",
+    void 0
+  );
+  __decorate(
+    [Prop({ type: Number, default: 3 }), __metadata("design:type", Number)],
+    DragMixin.prototype,
+    "delta",
+    void 0
+  );
+  __decorate(
+    [Prop({ type: Number, default: 0 }), __metadata("design:type", Number)],
+    DragMixin.prototype,
+    "delay",
+    void 0
+  );
+  __decorate(
+    [Prop({ type: String, default: null }), __metadata("design:type", String)],
+    DragMixin.prototype,
+    "dragClass",
+    void 0
+  );
+  __decorate(
+    [Prop({ type: Number, default: 0 }), __metadata("design:type", Number)],
+    DragMixin.prototype,
+    "vibration",
+    void 0
+  );
+  __decorate(
+    [Prop({ type: Number, default: 100 }), __metadata("design:type", Number)],
+    DragMixin.prototype,
+    "scrollingEdgeSize",
+    void 0
+  );
+  DragMixin = __decorate([Component({})], DragMixin);
+  return DragMixin;
+})(DragAwareMixin);
 
-      if (this.disabled || this.downEvent !== null || !goodButton) {
-        return;
+var Drag = /** @class */ (function (_super) {
+  __extends(Drag, _super);
+  function Drag() {
+    return (_super !== null && _super.apply(this, arguments)) || this;
+  }
+  __decorate(
+    [
+      Prop({ default: "div", type: [String, Object, Function] }),
+      __metadata("design:type", Object),
+    ],
+    Drag.prototype,
+    "tag",
+    void 0
+  );
+  Drag = __decorate([Component({})], Drag);
+  return Drag;
+})(DragMixin);
+
+function normalizeComponent(
+  template,
+  style,
+  script,
+  scopeId,
+  isFunctionalTemplate,
+  moduleIdentifier,
+  /* server only */
+  shadowMode,
+  createInjector,
+  createInjectorSSR,
+  createInjectorShadow
+) {
+  if (typeof shadowMode !== "boolean") {
+    createInjectorSSR = createInjector;
+    createInjector = shadowMode;
+    shadowMode = false;
+  } // Vue.extend constructor export interop.
+
+  var options = typeof script === "function" ? script.options : script; // render functions
+
+  if (template && template.render) {
+    options.render = template.render;
+    options.staticRenderFns = template.staticRenderFns;
+    options._compiled = true; // functional template
+
+    if (isFunctionalTemplate) {
+      options.functional = true;
+    }
+  } // scopedId
+
+  if (scopeId) {
+    options._scopeId = scopeId;
+  }
+
+  var hook;
+
+  if (moduleIdentifier) {
+    // server build
+    hook = function hook(context) {
+      // 2.3 injection
+      context =
+        context || // cached call
+        (this.$vnode && this.$vnode.ssrContext) || // stateful
+        (this.parent && this.parent.$vnode && this.parent.$vnode.ssrContext); // functional
+      // 2.2 with runInNewContext: true
+
+      if (!context && typeof __VUE_SSR_CONTEXT__ !== "undefined") {
+        context = __VUE_SSR_CONTEXT__;
+      } // inject component styles
+
+      if (style) {
+        style.call(this, createInjectorSSR(context));
+      } // register component module identifier for async chunk inference
+
+      if (context && context._registeredComponents) {
+        context._registeredComponents.add(moduleIdentifier);
       }
+    }; // used by ssr in case component is cached and beforeCreate
+    // never gets called
 
-      // Check that the target element is eligible for starting a drag
-      // Includes checking against the handle selector
-      //   or whether the element contains 'dnd-no-drag' class (which should disable dragging from that
-      //   sub-element of a draggable parent)
-      const goodTarget = !target.matches('.dnd-no-drag, .dnd-no-drag *') &&
-              (
-                !this.handle ||
-                target.matches(this.handle + ', ' + this.handle + ' *')
-              );
-
-      if (!goodTarget) {
-        return;
-      }
-
-      this.scrollContainer = scrollparent(target);
-      this.initialUserSelect = document.body.style.userSelect;
-      document.documentElement.style.userSelect = 'none'; // Permet au drag de se poursuivre normalement même
-      // quand on quitte un élémént avec overflow: hidden.
-      this.dragStarted = false;
-      this.downEvent = e;
-      if (this.downEvent.type === 'mousedown') {
-        const mouse = e;
-        this.startPosition = {
-          x: mouse.clientX,
-          y: mouse.clientY
+    options._ssrRegister = hook;
+  } else if (style) {
+    hook = shadowMode
+      ? function () {
+          style.call(
+            this,
+            createInjectorShadow(this.$root.$options.shadowRoot)
+          );
+        }
+      : function (context) {
+          style.call(this, createInjector(context));
         };
-      }
-      else {
-        const touch = e;
-        this.startPosition = {
-          x: touch.touches[0].clientX,
-          y: touch.touches[0].clientY
-        };
-      }
-
-      if (this.delay) {
-        this.dragInitialised = false;
-        clearTimeout(this.delayTimer);
-        this.delayTimer = setTimeout(() => {
-          this.dragInitialised = true;
-          this.performVibration();
-        }, this.delay);
-      }
-      else {
-        this.dragInitialised = true;
-        this.performVibration();
-      }
-
-      document.addEventListener('click', this.onMouseClick, true);
-      document.addEventListener('mouseup', this.onMouseUp);
-      document.addEventListener('touchend', this.onMouseUp);
-      document.addEventListener('selectstart', this.onSelectStart);
-      document.addEventListener('keyup', this.onKeyUp);
-
-      setTimeout(() => {
-        document.addEventListener('mousemove', this.onMouseMove);
-        document.addEventListener('touchmove', this.onMouseMove, { passive: false });
-        document.addEventListener('easy-dnd-move', this.onEasyDnDMove);
-      }, 0);
-
-      // Prevents event from bubbling to ancestor drag components and initiate several drags at the same time
-      e.stopPropagation();
-    },
-    // Prevent the user from accidentally causing a click event
-    // if they have just attempted a drag event
-    onMouseClick (e) {
-      if (this.ignoreNextClick) {
-        e.preventDefault();
-        e.stopPropagation && e.stopPropagation();
-        e.stopImmediatePropagation && e.stopImmediatePropagation();
-        this.ignoreNextClick = false;
-        return false;
-      }
-    },
-    onMouseMove (e) {
-      // We ignore the mousemove event that follows touchend :
-      if (this.downEvent === null) return;
-
-      // On touch devices, we ignore fake mouse events and deal with touch events only.
-      if (this.downEvent.type === 'touchstart' && e.type === 'mousemove') return;
-
-      // Find out event target and pointer position :
-      let target = null;
-      let x = null;
-      let y = null;
-      if (e.type === 'touchmove') {
-        const touch = e;
-        x = touch.touches[0].clientX;
-        y = touch.touches[0].clientY;
-        target = document.elementFromPoint(x, y);
-        if (!target) {
-          // Mouse going off screen. Ignore event.
-          return;
-        }
-      }
-      else {
-        const mouse = e;
-        x = mouse.clientX;
-        y = mouse.clientY;
-        target = mouse.target;
-      }
-
-      // Distance between current event and start position :
-      const dist = Math.sqrt(Math.pow(this.startPosition.x - x, 2) + Math.pow(this.startPosition.y - y, 2));
-
-      // If the drag has not begun yet and distance from initial point is greater than delta, we start the drag :
-      if (!this.dragStarted && dist > this.delta) {
-        // If they have dragged greater than the delta before the delay period has ended,
-        // It means that they attempted to perform another action (such as scrolling) on the page
-        if (!this.dragInitialised) {
-          clearTimeout(this.delayTimer);
-        }
-        else {
-          this.ignoreNextClick = true;
-          this.dragStarted = true;
-          dnd.startDrag(this, this.downEvent, this.startPosition.x, this.startPosition.y, this.type, this.data);
-          document.documentElement.classList.add('drag-in-progress');
-        }
-      }
-
-      // Dispatch custom easy-dnd-move event :
-      if (this.dragStarted) {
-        // If cursor/touch is at edge of container, perform scroll if available
-        // If this.dragTop is defined, it means they are dragging on top of another DropList/EasyDnd component
-        // if dropTop is a DropList, use the scrollingEdgeSize of that container if it exists, otherwise use the scrollingEdgeSize of the Drag component
-        const currEdgeSize = this.dragTop && this.dragTop.$props.scrollingEdgeSize !== undefined ?
-          this.dragTop.$props.scrollingEdgeSize :
-          this.scrollingEdgeSize;
-
-        if (currEdgeSize) {
-          const currScrollContainer = this.dragTop ? scrollparent(this.dragTop.$el) : this.scrollContainer;
-          performEdgeScroll(e, currScrollContainer, x, y, currEdgeSize);
-        }
-        else {
-          cancelScrollAction();
-        }
-
-        const custom = new CustomEvent('easy-dnd-move', {
-          bubbles: true,
-          cancelable: true,
-          detail: {
-            x,
-            y,
-            native: e
-          }
-        });
-        target.dispatchEvent(custom);
-      }
-
-      // Prevent scroll on touch devices if they were performing a drag
-      if (this.dragInitialised && e.cancelable) {
-        e.preventDefault();
-      }
-    },
-    onEasyDnDMove (e) {
-      dnd.mouseMove(e, null);
-    },
-    onMouseUp (e) {
-      // On touch devices, we ignore fake mouse events and deal with touch events only.
-      if (this.downEvent.type === 'touchstart' && e.type === 'mouseup') return;
-
-      // This delay makes sure that when the click event that results from the mouseup is produced, the drag is
-      // still in progress. So by checking the flag dnd.inProgress, one can tell apart true clicks from drag and
-      // drop artefacts.
-      setTimeout(() => {
-        this.cancelDragActions();
-
-        if (this.dragStarted) {
-          dnd.stopDrag(e);
-        }
-        this.finishDrag();
-      }, 0);
-    },
-    onKeyUp (e) {
-      // If ESC is pressed, cancel the drag
-      if (e.key === 'Escape') {
-        this.cancelDragActions();
-
-        setTimeout(() => {
-          dnd.cancelDrag(e);
-          this.finishDrag();
-        }, 0);
-      }
-    },
-    cancelDragActions () {
-      this.dragInitialised = false;
-      clearTimeout(this.delayTimer);
-      cancelScrollAction();
-    },
-    finishDrag () {
-      this.downEvent = null;
-      this.scrollContainer = null;
-
-      if (this.dragStarted) {
-        document.documentElement.classList.remove('drag-in-progress');
-      }
-      document.removeEventListener('click', this.onMouseClick, true);
-      document.removeEventListener('mousemove', this.onMouseMove);
-      document.removeEventListener('touchmove', this.onMouseMove);
-      document.removeEventListener('easy-dnd-move', this.onEasyDnDMove);
-      document.removeEventListener('mouseup', this.onMouseUp);
-      document.removeEventListener('touchend', this.onMouseUp);
-      document.removeEventListener('selectstart', this.onSelectStart);
-      document.removeEventListener('keyup', this.onKeyUp);
-      document.documentElement.style.userSelect = this.initialUserSelect;
-    },
-    dndDragStart (ev) {
-      if (ev.source === this) {
-        this.$emit('dragstart', ev);
-      }
-    },
-    dndDragEnd (ev) {
-      if (ev.source === this) {
-        this.$emit('dragend', ev);
-      }
-    },
-    createDragImage (selfTransform) {
-      let image;
-      if (this.$slots['drag-image']) {
-        const el = this.$refs['drag-image'] || document.createElement('div');
-        if (el.childElementCount !== 1) {
-          image = createDragImage(el);
-        }
-        else {
-          image = createDragImage(el.children.item(0));
-        }
-      }
-      else {
-        image = createDragImage(this.$el);
-        image.style.transform = selfTransform;
-      }
-
-      if (this.dragClass) {
-        image.classList.add(this.dragClass);
-      }
-      image.classList.add('dnd-ghost');
-      image['__opacity'] = this.dragImageOpacity;
-      return image;
-    }
-  },
-  created () {
-    dnd.on('dragstart', this.dndDragStart);
-    dnd.on('dragend', this.dndDragEnd);
-  },
-  mounted () {
-    this.$el.addEventListener('mousedown', this.onMouseDown);
-    this.$el.addEventListener('touchstart', this.onMouseDown);
-  },
-  beforeUnmount () {
-    dnd.off('dragstart', this.dndDragStart);
-    dnd.off('dragend', this.dndDragEnd);
-
-    this.$el.removeEventListener('mousedown', this.onMouseDown);
-    this.$el.removeEventListener('touchstart', this.onMouseDown);
   }
-};
 
-var script$4 = {
-  name: 'Drag',
-  mixins: [DragMixin],
-  props: {
-    /**
-     * Tag to be used as root of this component. Defaults to div.
-     */
-    tag: {
-      type: [String, Object, Function],
-      default: 'div'
-    }
-  },
-  computed: {
-    dynamicSlots () {
-      return Object.entries(this.$slots).filter(([key]) => key !== 'drag-image' && key !== 'default');
+  if (hook) {
+    if (options.functional) {
+      // register for functional component in vue file
+      var originalRender = options.render;
+
+      options.render = function renderWithStyleInjection(h, context) {
+        hook.call(context);
+        return originalRender(h, context);
+      };
+    } else {
+      // inject component registration as beforeCreate hook
+      var existing = options.beforeCreate;
+      options.beforeCreate = existing ? [].concat(existing, hook) : [hook];
     }
   }
-};
 
-const _hoisted_1$2 = {
-  key: 0,
-  ref: "drag-image",
-  class: "__drag-image"
-};
-
-function render$3(_ctx, _cache, $props, $setup, $data, $options) {
-  return (openBlock(), createBlock(resolveDynamicComponent($props.tag), {
-    class: normalizeClass(_ctx.cssClasses)
-  }, createSlots({
-    default: withCtx(() => [
-      renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(_ctx.$slots['default'] || {}))),
-      (_ctx.dragInitialised)
-        ? (openBlock(), createElementBlock("div", _hoisted_1$2, [
-            renderSlot(_ctx.$slots, "drag-image")
-          ], 512 /* NEED_PATCH */))
-        : createCommentVNode("v-if", true)
-    ]),
-    _: 2 /* DYNAMIC */
-  }, [
-    renderList($options.dynamicSlots, ([slot, args]) => {
-      return {
-        name: slot,
-        fn: withCtx(() => [
-          renderSlot(_ctx.$slots, slot, normalizeProps(guardReactiveProps(args)))
-        ])
-      }
-    })
-  ]), 1032 /* PROPS, DYNAMIC_SLOTS */, ["class"]))
+  return script;
 }
 
-script$4.render = render$3;
-script$4.__scopeId = "data-v-36828a08";
+var normalizeComponent_1 = normalizeComponent;
 
-function dropAllowed (inst) {
-  if (inst.dragInProgress && inst.typeAllowed) {
-    return inst.compatibleMode && inst.effectiveAcceptsData(inst.dragData, inst.dragType);
-  }
-  return null;
+var isOldIE =
+  typeof navigator !== "undefined" &&
+  /msie [6-9]\\b/.test(navigator.userAgent.toLowerCase());
+function createInjector(context) {
+  return function (id, style) {
+    return addStyle(id, style);
+  };
 }
+var HEAD;
+var styles = {};
 
-function doDrop (inst, event) {
-  inst.$emit('drop', event);
-  event.source.$emit(inst.mode, event);
-}
+function addStyle(id, css) {
+  var group = isOldIE ? css.media || "default" : id;
+  var style =
+    styles[group] ||
+    (styles[group] = {
+      ids: new Set(),
+      styles: [],
+    });
 
-function candidate (inst, type) {
-  return inst.effectiveAcceptsType(type);
-}
+  if (!style.ids.has(id)) {
+    style.ids.add(id);
+    var code = css.source;
 
-var DropMixin = {
-  mixins: [DragAwareMixin],
-  props: {
-    acceptsType: {
-      type: [String, Array, Function],
-      default: null
-    },
-    acceptsData: {
-      type: Function,
-      default: () => {
-        return true;
-      }
-    },
-    mode: {
-      type: String,
-      default: 'copy'
-    },
-    dragImageOpacity: {
-      type: Number,
-      default: 0.7
+    if (css.map) {
+      // https://developer.chrome.com/devtools/docs/javascript-debugging
+      // this makes source maps inside style tags work properly in Chrome
+      code += "\n/*# sourceURL=" + css.map.sources[0] + " */"; // http://stackoverflow.com/a/26603875
+
+      code +=
+        "\n/*# sourceMappingURL=data:application/json;base64," +
+        btoa(unescape(encodeURIComponent(JSON.stringify(css.map)))) +
+        " */";
     }
-  },
-  emits: ['dragover', 'dragenter', 'dragleave', 'dragend', 'drop'],
-  data () {
-    return {
-      isDrop: true
-    };
-  },
-  computed: {
-    compatibleMode () {
-      return this.dragInProgress ? true : null;
+
+    if (!style.element) {
+      style.element = document.createElement("style");
+      style.element.type = "text/css";
+      if (css.media) {
+        style.element.setAttribute("media", css.media);
+      }
+
+      if (HEAD === undefined) {
+        HEAD = document.head || document.getElementsByTagName("head")[0];
+      }
+
+      HEAD.appendChild(style.element);
+    }
+
+    if ("styleSheet" in style.element) {
+      style.styles.push(code);
+      style.element.styleSheet.cssText = style.styles
+        .filter(Boolean)
+        .join("\n");
+    } else {
+      var index = style.ids.size - 1;
+      var textNode = document.createTextNode(code);
+      var nodes = style.element.childNodes;
+      if (nodes[index]) {
+        style.element.removeChild(nodes[index]);
+      }
+      if (nodes.length) {
+        style.element.insertBefore(textNode, nodes[index]);
+      } else {
+        style.element.appendChild(textNode);
+      }
+    }
+  }
+}
+
+var browser = createInjector;
+
+/* script */
+var __vue_script__ = Drag;
+
+/* template */
+var __vue_render__ = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    _vm.tag,
+    _vm._g(
+      _vm._b(
+        {
+          tag: "component",
+          class: _vm.cssClasses,
+          scopedSlots: _vm._u(
+            [
+              _vm._l(_vm.$scopedSlots, function (_, slot) {
+                return {
+                  key: slot,
+                  fn: function (scope) {
+                    return [_vm._t(slot, null, null, scope)];
+                  },
+                };
+              }),
+            ],
+            null,
+            true
+          ),
+        },
+        "component",
+        _vm.$attrs,
+        false
+      ),
+      _vm.$listeners
+    ),
+    [
+      _vm._t("default"),
+      _vm._v(" "),
+      _vm._v(" "),
+      _vm.dragInitialised
+        ? _c(
+            "div",
+            { ref: "drag-image", staticClass: "__drag-image" },
+            [_vm._t("drag-image")],
+            2
+          )
+        : _vm._e(),
+    ],
+    2
+  );
+};
+var __vue_staticRenderFns__ = [];
+
+/* style */
+var __vue_inject_styles__ = function (inject) {
+  if (!inject) {
+    return;
+  }
+  inject("data-v-fb811e22_0", {
+    source:
+      ".drop-allowed.drop-in *{cursor:inherit!important}.drop-forbidden.drop-in,.drop-forbidden.drop-in *{cursor:no-drop!important}.drag-no-handle:hover{cursor:move;cursor:grab}",
+    map: undefined,
+    media: undefined,
+  }),
+    inject("data-v-fb811e22_1", {
+      source:
+        "html.drag-in-progress *{cursor:move!important;cursor:grabbing!important}",
+      map: undefined,
+      media: undefined,
+    }),
+    inject("data-v-fb811e22_2", {
+      source:
+        ".__drag-image[data-v-fb811e22]{position:fixed;top:-10000px;left:-10000px;will-change:left,top}",
+      map: undefined,
+      media: undefined,
+    });
+};
+/* scoped */
+var __vue_scope_id__ = "data-v-fb811e22";
+/* module identifier */
+var __vue_module_identifier__ = undefined;
+/* functional template */
+var __vue_is_functional_template__ = false;
+/* style inject SSR */
+
+var Drag$1 = normalizeComponent_1(
+  { render: __vue_render__, staticRenderFns: __vue_staticRenderFns__ },
+  __vue_inject_styles__,
+  __vue_script__,
+  __vue_scope_id__,
+  __vue_is_functional_template__,
+  __vue_module_identifier__,
+  browser,
+  undefined
+);
+
+var DropMixin = /** @class */ (function (_super) {
+  __extends(DropMixin, _super);
+  function DropMixin() {
+    var _this = _super.call(this) || this;
+    _this.isDrop = true;
+    return _this;
+  }
+  DropMixin.prototype.effectiveAcceptsType = function (type) {
+    if (this.acceptsType === null) {
+      return true;
+    } else if (typeof this.acceptsType === "string") {
+      return this.acceptsType === type;
+    } else if (
+      typeof this.acceptsType === "object" &&
+      Array.isArray(this.acceptsType)
+    ) {
+      return this.acceptsType.includes(type);
+    } else {
+      return this.acceptsType(type);
+    }
+  };
+  DropMixin.prototype.effectiveAcceptsData = function (data, type) {
+    return this.acceptsData(data, type);
+  };
+  DropMixin.prototype.created = function () {
+    dnd.on("dragpositionchanged", this.onDragPositionChanged);
+    dnd.on("dragtopchanged", this.onDragTopChanged);
+    dnd.on("drop", this.onDrop);
+    dnd.on("dragend", this.onDragEnd);
+  };
+  DropMixin.prototype.beforeDestroy = function () {
+    dnd.off("dragpositionchanged", this.onDragPositionChanged);
+    dnd.off("dragtopchanged", this.onDragTopChanged);
+    dnd.off("drop", this.onDrop);
+    dnd.off("dragend", this.onDragEnd);
+  };
+  DropMixin.prototype.onDragPositionChanged = function (event) {
+    if (this === event.top) {
+      this.$emit("dragover", event);
+    }
+  };
+  DropMixin.prototype.onDragTopChanged = function (event) {
+    if (this === event.top) {
+      this.$emit("dragenter", event);
+    }
+    if (this === event.previousTop) {
+      this.$emit("dragleave", event);
+    }
+  };
+  DropMixin.prototype.onDragEnd = function (event) {
+    if (this === event.top) {
+      this.$emit("dragend", event);
+    }
+  };
+  DropMixin.prototype.onDrop = function (event) {
+    if (this.dropIn && this.compatibleMode && this.dropAllowed) {
+      this.doDrop(event);
+    }
+  };
+  DropMixin.prototype.doDrop = function (event) {
+    this.$emit("drop", event);
+    event.source.$emit(this.mode, event);
+  };
+  DropMixin.prototype.mounted = function () {
+    var el = this.$el;
+    var comp = this;
+    el.addEventListener("easy-dnd-move", onMouseMove);
+    function onMouseMove(e) {
+      dnd.mouseMove(e, comp);
+    }
+  };
+  Object.defineProperty(DropMixin.prototype, "compatibleMode", {
+    get: function () {
+      if (this.dragInProgress) {
+        return (
+          this.mode === "copy" || dnd.sourceListeners.hasOwnProperty(this.mode)
+        );
+      } else {
+        return null;
+      }
     },
-    dropIn () {
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropMixin.prototype, "dropIn", {
+    get: function () {
       if (this.dragInProgress) {
         return this.dragTop === this;
-      }
-      return null;
-    },
-    typeAllowed () {
-      if (this.dragInProgress) {
-        return this.effectiveAcceptsType(this.dragType);
-      }
-      return null;
-    },
-    dropAllowed () {
-      return dropAllowed(this);
-    },
-    cssClasses () {
-      const clazz = {
-        'dnd-drop': true
-      };
-      if (this.dropIn !== null) {
-        clazz['drop-in'] = this.dropIn;
-        clazz['drop-out'] = !this.dropIn;
-      }
-      if (this.typeAllowed !== null) {
-        clazz['type-allowed'] = this.typeAllowed;
-        clazz['type-forbidden'] = !this.typeAllowed;
-      }
-      if (this.dropAllowed !== null) {
-        clazz['drop-allowed'] = this.dropAllowed;
-        clazz['drop-forbidden'] = !this.dropAllowed;
-      }
-      return clazz;
-    }
-  },
-  methods: {
-    effectiveAcceptsType (type) {
-      if (this.acceptsType === null) {
-        return true;
-      }
-      else if (typeof (this.acceptsType) === 'string' || typeof(this.acceptsType) === 'number') {
-        return this.acceptsType === type;
-      }
-      else if (typeof (this.acceptsType) === 'object' && Array.isArray(this.acceptsType)) {
-        return this.acceptsType.includes(type);
-      }
-      else {
-        return this.acceptsType(type);
-      }
-    },
-    effectiveAcceptsData (data, type) {
-      return this.acceptsData(data, type);
-    },
-    onDragPositionChanged (event) {
-      if (this === event.top) {
-        this.$emit('dragover', event);
-      }
-    },
-    onDragTopChanged (event) {
-      if (this === event.top) {
-        this.$emit('dragenter', event);
-      }
-      if (this === event.previousTop) {
-        this.$emit('dragleave', event);
-      }
-    },
-    onDragEnd (event) {
-      if (this === event.top) {
-        this.$emit('dragend', event);
-      }
-    },
-    onDrop (event) {
-      if (this.dropIn && this.compatibleMode && this.dropAllowed) {
-        this.doDrop(event);
-      }
-    },
-    doDrop (event) {
-      doDrop(this, event);
-    },
-    /**
-         * Returns true if the current drop area participates in the current drag operation.
-         */
-    candidate (type) {
-      return candidate(this, type);
-    },
-    createDragImage () {
-      let image = 'source';
-      if (this.$refs['drag-image']) {
-        const el = this.$refs['drag-image'];
-        if (el.childElementCount !== 1) {
-          image = createDragImage(el);
-        }
-        else {
-          image = createDragImage(el.children.item(0));
-        }
-        image['__opacity'] = this.dragImageOpacity;
-        image.classList.add('dnd-ghost');
-      }
-      return image;
-    },
-    onDnDMove (e) {
-      dnd.mouseMove(e, this);
-    }
-  },
-  created () {
-    dnd.on('dragpositionchanged', this.onDragPositionChanged);
-    dnd.on('dragtopchanged', this.onDragTopChanged);
-    dnd.on('drop', this.onDrop);
-    dnd.on('dragend', this.onDragEnd);
-  },
-  mounted () {
-    this.$el.addEventListener('easy-dnd-move', this.onDnDMove);
-  },
-  beforeUnmount () {
-    this.$el.removeEventListener('easy-dnd-move', this.onDnDMove);
-
-    dnd.off('dragpositionchanged', this.onDragPositionChanged);
-    dnd.off('dragtopchanged', this.onDragTopChanged);
-    dnd.off('drop', this.onDrop);
-    dnd.off('dragend', this.onDragEnd);
-  }
-};
-
-var script$3 = {
-  name: 'Drop',
-  mixins: [DropMixin],
-  props: {
-    tag: {
-      type: [String, Object, Function],
-      default: 'div'
-    }
-  },
-  computed: {
-    dynamicSlots () {
-      return Object.entries(this.$slots).filter(([key]) => key !== 'drag-image' && key !== 'default');
-    },
-    showDragImage () {
-      return this.dragInProgress && this.typeAllowed && !!this.$slots['drag-image'];
-    }
-  }
-};
-
-const _hoisted_1$1 = {
-  key: 0,
-  ref: "drag-image",
-  class: "__drag-image"
-};
-
-function render$2(_ctx, _cache, $props, $setup, $data, $options) {
-  return (openBlock(), createBlock(resolveDynamicComponent($props.tag), {
-    class: normalizeClass(_ctx.cssClasses)
-  }, createSlots({
-    default: withCtx(() => [
-      renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(_ctx.$slots['default'] || {}))),
-      ($options.showDragImage)
-        ? (openBlock(), createElementBlock("div", _hoisted_1$1, [
-            renderSlot(_ctx.$slots, "drag-image", {
-              type: _ctx.dragType,
-              data: _ctx.dragData
-            })
-          ], 512 /* NEED_PATCH */))
-        : createCommentVNode("v-if", true)
-    ]),
-    _: 2 /* DYNAMIC */
-  }, [
-    renderList($options.dynamicSlots, ([slot, args]) => {
-      return {
-        name: slot,
-        fn: withCtx(() => [
-          renderSlot(_ctx.$slots, slot, normalizeProps(guardReactiveProps(args)))
-        ])
-      }
-    })
-  ]), 1032 /* PROPS, DYNAMIC_SLOTS */, ["class"]))
-}
-
-script$3.render = render$2;
-script$3.__scopeId = "data-v-01f6c2c0";
-
-var script$2 = {
-  name: 'DropMask',
-  mixins: [DragAwareMixin],
-  props: {
-    tag: {
-      type: [String, Object, Function],
-      default: 'div'
-    }
-  },
-  data () {
-    return {
-      isDropMask: true
-    };
-  },
-  mounted () {
-    this.$el.addEventListener('easy-dnd-move', this.onDndMove);
-  },
-  beforeUnmount () {
-    this.$el.removeEventListener('easy-dnd-move', this.onDndMove);
-  },
-  methods: {
-    createDragImage () {
-      return 'source';
-    },
-    onDndMove (e) {
-      dnd.mouseMove(e, this);
-    }
-  }
-};
-
-function render$1(_ctx, _cache, $props, $setup, $data, $options) {
-  return (openBlock(), createBlock(resolveDynamicComponent($props.tag), null, createSlots({ _: 2 /* DYNAMIC */ }, [
-    renderList(_ctx.$slots, (args, slot) => {
-      return {
-        name: slot,
-        fn: withCtx(() => [
-          renderSlot(_ctx.$slots, slot, normalizeProps(guardReactiveProps(args)))
-        ])
-      }
-    })
-  ]), 1024 /* DYNAMIC_SLOTS */))
-}
-
-script$2.render = render$1;
-
-var script$1 = {
-  name: 'DragFeedback'
-};
-
-const _hoisted_1 = { class: "DragFeedback" };
-
-function render(_ctx, _cache, $props, $setup, $data, $options) {
-  return (openBlock(), createElementBlock("div", _hoisted_1, [
-    renderSlot(_ctx.$slots, "default")
-  ]))
-}
-
-script$1.render = render;
-
-class Grid {
-    reference;
-    referenceOriginalPosition;
-    magnets = [];
-
-    constructor (collection, upToIndex, direction, fromIndex) {
-      this.reference = collection.item(0).parentNode;
-      this.referenceOriginalPosition = {
-        x: this.reference.getBoundingClientRect().left - this.reference.scrollLeft,
-        y: this.reference.getBoundingClientRect().top - this.reference.scrollTop,
-      };
-      let index = 0;
-      for (const child of collection) {
-        if (index > upToIndex) break;
-        const rect = child.getBoundingClientRect();
-        const hasNestedDrop = child.classList.contains('dnd-drop') || child.getElementsByClassName('dnd-drop').length > 0;
-        let horizontal = false;
-        if (hasNestedDrop) {
-          if (direction === 'auto') {
-            // Auto mode not supported for now. Row or column must be defined explicitly if there are nested drop lists.
-            throw 'Easy-DnD error : a drop list is missing one of these attributes : \'row\' or \'column\'.';
-          }
-          else {
-            horizontal = direction === 'row';
-          }
-        }
-        if (fromIndex === null) {
-          // Inserting mode.
-          this.magnets.push(hasNestedDrop ? this.before(rect, horizontal) : this.center(rect));
-        }
-        else {
-          // Reordering mode.
-          this.magnets.push(hasNestedDrop ? (
-            fromIndex < index ? this.after : this.before
-          )(rect, horizontal) : this.center(rect));
-        }
-        // Debug : show magnets :
-        //document.body.insertAdjacentHTML("beforeend", "<div style='background-color: red; position: fixed; width: 1px; height: 1px; top:" + this.magnets[index].y + "px; left:" + this.magnets[index].x + "px;' ></div>")
-        index++;
-      }
-    }
-
-    /**
-     * Returns the center of the rectangle.
-     */
-    center (rect) {
-      return {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2
-      };
-    }
-
-    /**
-     * When horizontal is true / false, returns middle of the left / top side of the rectangle.
-     */
-    before (rect, horizontal) {
-      return horizontal ? {
-        x: rect.left,
-        y: rect.top + rect.height / 2
-      } : {
-        x: rect.left + rect.width / 2,
-        y: rect.top
-      };
-    }
-
-    /**
-     * When horizontal is true / false, returns middle of the right / bottom side of the rectangle.
-     */
-    after (rect, horizontal) {
-      return horizontal ? {
-        x: rect.left + rect.width,
-        y: rect.top + rect.height / 2
-      } : {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height
-      };
-    }
-
-    /**
-     * In case the user scrolls during the drag, the position of the magnets are not what they used to be when the drag
-     * started. A correction must be applied that takes into account the amount of scroll. This correction is the
-     * difference between the current position of the parent element and its position when the drag started.
-     */
-    correction () {
-      return {
-        x: this.reference.getBoundingClientRect().left  - this.reference.scrollLeft - this.referenceOriginalPosition.x,
-        y: this.reference.getBoundingClientRect().top - this.reference.scrollTop - this.referenceOriginalPosition.y,
-      };
-    }
-
-    closestIndex (position) {
-      const x = position.x - this.correction().x;
-      const y = position.y - this.correction().y;
-      let minDist = 999999;
-      let index = -1;
-      for (let i = 0; i < this.magnets.length; i++) {
-        const magnet = this.magnets[i];
-        const dist = Math.sqrt(Math.pow(magnet.x - x, 2) + Math.pow(magnet.y - y, 2));
-        if (dist < minDist) {
-          minDist = dist;
-          index = i;
-        }
-      }
-      return index;
-    }
-}
-
-class DnDEvent {
-    type;
-    data;
-    top;
-    previousTop;
-    source;
-    position;
-    success;
-    native;
-}
-
-class ReorderEvent {
-    from;
-    to;
-    
-    constructor (from, to) {
-      this.from = from;
-      this.to = to;
-    }
-
-    apply (array) {
-      const temp = array[this.from];
-      array.splice(this.from, 1);
-      array.splice(this.to, 0, temp);
-    }
-
-}
-
-class InsertEvent {
-    type;
-    data;
-    index;
-    
-    constructor (type, data, index) {
-      this.type = type;
-      this.data = data;
-      this.index = index;
-    }
-}
-
-var script = {
-  name: 'DropList',
-  mixins: [DropMixin],
-  props: {
-    tag: {
-      type: [String, Object, Function],
-      default: 'div'
-    },
-    items: {
-      type: Array,
-      required: true
-    },
-    row: {
-      type: Boolean,
-      default: false
-    },
-    column: {
-      type: Boolean,
-      default: false
-    },
-    noAnimations: {
-      type: Boolean,
-      default: false
-    },
-    scrollingEdgeSize: {
-      type: Number,
-      default: undefined
-    }
-  },
-  emits: ['reorder', 'insert'],
-  data () {
-    return {
-      grid: null,
-      forbiddenKeys: [],
-      feedbackKey: null,
-      fromIndex: null
-    };
-  },
-  computed: {
-    rootTag () {
-      if (this.noAnimations) {
-        return this.tag;
-      }
-      return TransitionGroup;
-    },
-    rootProps () {
-      if (this.noAnimations) {
-        return {};
-      }
-
-      return {
-        tag: this.tag,
-        css: false
-      };
-    },
-    direction () {
-      // todo - rewrite this logic
-      if (this.row) return 'row';
-      if (this.column) return 'column';
-      return 'auto';
-    },
-    reordering () {
-      if (dnd.inProgress) {
-        return dnd.source.$el.parentElement === this.$el;
-      }
-      return null;
-    },
-    closestIndex () {
-      if (this.grid) {
-        return this.grid.closestIndex(dnd.position);
-      }
-      return null;
-    },
-    dropAllowed () {
-      if (this.dragInProgress) {
-        if (this.reordering) {
-          return this.items.length > 1;
-        }
-        else {
-          // todo - eventually refactor so that this isn't necessary
-          if (!dropAllowed(this)) {
-            return false;
-          }
-
-          if (this.forbiddenKeys !== null && this.feedbackKey !== null) {
-            return !this.forbiddenKeys.includes(this.feedbackKey);
-          }
-
-          return true;
-        }
-      }
-
-      return null;
-    },
-    itemsBeforeFeedback () {
-      if (this.closestIndex === 0) {
-        return [];
-      }
-      return this.items.slice(0, this.closestIndex);
-    },
-    itemsAfterFeedback () {
-      if (this.closestIndex === this.items.length) {
-        return [];
-      }
-      return this.items.slice(this.closestIndex);
-    },
-    itemsBeforeReorderingFeedback () {
-      if (this.closestIndex <= this.fromIndex) {
-        return this.items.slice(0, this.closestIndex);
-      }
-      return this.items.slice(0, this.closestIndex + 1);
-    },
-    itemsAfterReorderingFeedback () {
-      if (this.closestIndex <= this.fromIndex) {
-        return this.items.slice(this.closestIndex);
-      }
-      return this.items.slice(this.closestIndex + 1);
-    },
-    reorderedItems () {
-      const toIndex = this.closestIndex;
-      const reordered = [...this.items];
-      const temp = reordered[this.fromIndex];
-
-      reordered.splice(this.fromIndex, 1);
-      reordered.splice(toIndex, 0, temp);
-      return reordered;
-    },
-    clazz () {
-      return {
-        'drop-list': true,
-        'reordering': this.reordering === true,
-        'inserting': this.reordering === false,
-        ...(this.reordering === false ? this.cssClasses : { 'dnd-drop': true })
-      };
-    },
-    showDragFeedback () {
-      return this.dragInProgress && this.typeAllowed && !this.reordering;
-    },
-    showInsertingDragImage () {
-      return this.dragInProgress && this.typeAllowed && !this.reordering && !!this.$slots['drag-image'];
-    },
-    showReorderingDragImage () {
-      return this.dragInProgress && this.reordering && !!this.$slots['reordering-drag-image'];
-    },
-    hasReorderingFeedback () {
-      return !!this.$slots['reordering-feedback'];
-    },
-    hasEmptySlot () {
-      return !!this.$slots['empty'];
-    }
-  },
-  created () {
-    dnd.on('dragstart', this.onDragStart);
-    dnd.on('dragend', this.onDragEnd);
-  },
-  beforeUnmount () {
-    dnd.off('dragstart', this.onDragStart);
-    dnd.off('dragend', this.onDragEnd);
-  },
-  methods: {
-    // Presence of feedback node in the DOM and of keys in the virtual DOM required => delayed until what
-    // depends on drag data has been processed.
-    refresh () {
-      this.$nextTick(() => {
-        this.grid = this.computeInsertingGrid();
-        this.feedbackKey = this.computeFeedbackKey();
-        this.forbiddenKeys = this.computeForbiddenKeys();
-      });
-    },
-    onDragStart (event) {
-      if (this.candidate(dnd.type)) {
-        if (this.reordering) {
-          this.fromIndex = Array.prototype.indexOf.call(event.source.$el.parentElement.children, event.source.$el);
-          this.grid = this.computeReorderingGrid();
-        }
-        else {
-          this.refresh();
-        }
-      }
-    },
-    onDragEnd () {
-      this.fromIndex = null;
-      this.feedbackKey = null;
-      this.forbiddenKeys = null;
-      this.grid = null;
-    },
-    doDrop (event) {
-      if (this.reordering) {
-        if (this.fromIndex !== this.closestIndex) {
-          this.$emit('reorder', new ReorderEvent(
-            this.fromIndex,
-            this.closestIndex
-          ));
-        }
-      }
-      else {
-        // todo - eventually remove the need for this
-        doDrop(this, event);
-        this.$emit('insert', new InsertEvent(
-          event.type,
-          event.data,
-          this.closestIndex
-        ));
-      }
-    },
-    candidate (type) {
-      return candidate(this, type) || this.reordering;
-    },
-    computeForbiddenKeys () {
-      return (this.noAnimations ? [] : this.$refs.component.$slots['default']())
-        .map(vn => vn.key)
-        .filter(k => !!k && k !== 'drag-image' && k !== 'drag-feedback');
-    },
-    computeFeedbackKey () {
-      return this.$refs['feedback']['$slots']['default']()[0]['key'];
-    },
-    computeInsertingGrid () {
-      if (this.$refs.feedback.$el.children.length < 1) {
+      } else {
         return null;
       }
-
-      const feedback = this.$refs.feedback.$el.children[0];
-      const clone = feedback.cloneNode(true);
-      const tg = this.$el;
-      if (tg.children.length > this.items.length) {
-        tg.insertBefore(clone, tg.children[this.items.length]);
-      }
-      else {
-        tg.appendChild(clone);
-      }
-      const grid = new Grid(tg.children, this.items.length, this.direction, null);
-      tg.removeChild(clone);
-      return grid;
     },
-    computeReorderingGrid () {
-      return new Grid(this.$el.children, this.items.length - 1, this.direction, this.fromIndex);
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropMixin.prototype, "typeAllowed", {
+    get: function () {
+      if (this.dragInProgress) {
+        return this.effectiveAcceptsType(this.dragType);
+      } else {
+        return null;
+      }
     },
-    createDragImage () {
-      let image;
-      if (this.$refs['drag-image']) {
-        const el = this.$refs['drag-image'];
-        let model;
-        if (el.childElementCount !== 1) {
-          model = el;
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropMixin.prototype, "dropAllowed", {
+    get: function () {
+      if (this.dragInProgress) {
+        if (this.typeAllowed) {
+          return (
+            this.compatibleMode &&
+            this.effectiveAcceptsData(this.dragData, this.dragType)
+          );
+        } else {
+          return null;
         }
-        else {
-          model = el.children.item(0);
-        }
-        const clone = model.cloneNode(true);
-        const tg = this.$el;
-        tg.appendChild(clone);
-        image = createDragImage(clone);
-        tg.removeChild(clone);
-        image['__opacity'] = this.dragImageOpacity;
-        image.classList.add('dnd-ghost');
+      } else {
+        return null;
       }
-      else {
-        image = 'source';
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropMixin.prototype, "cssClasses", {
+    get: function () {
+      var clazz = {
+        "dnd-drop": true,
+      };
+      if (this.dropIn !== null) {
+        clazz["drop-in"] = this.dropIn;
+        clazz["drop-out"] = !this.dropIn;
       }
-      return image;
+      if (this.typeAllowed !== null) {
+        clazz["type-allowed"] = this.typeAllowed;
+        clazz["type-forbidden"] = !this.typeAllowed;
+      }
+      if (this.dropAllowed !== null) {
+        clazz["drop-allowed"] = this.dropAllowed;
+        clazz["drop-forbidden"] = !this.dropAllowed;
+      }
+      return clazz;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropMixin.prototype, "cssStyle", {
+    get: function () {
+      return {};
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  /**
+   * Returns true if the current drop area participates in the current drag operation.
+   */
+  DropMixin.prototype.candidate = function (type, data, source) {
+    return this.effectiveAcceptsType(type);
+  };
+  DropMixin.prototype.createDragImage = function () {
+    var image;
+    if (this.$refs["drag-image"]) {
+      var el = this.$refs["drag-image"];
+      if (el.childElementCount !== 1) {
+        image = createDragImage(el);
+      } else {
+        image = createDragImage(el.children.item(0));
+      }
+      image["__opacity"] = this.dragImageOpacity;
+      image.classList.add("dnd-ghost");
+    } else {
+      image = "source";
     }
-  },
-  render () {
-    if (!this.$slots['item']) {
-      throw 'The "Item" slot must be defined to use DropList';
-    }
-
-    if (!this.$slots['feedback']) {
-      throw 'The "Feedback" slot must be defined to use DropList';
-    }
-
-    let defaultArr = [];
-    if (this.dropIn && this.dropAllowed) {
-      if (this.reordering) {
-        if (this.hasReorderingFeedback) {
-          const itemsReorderingBefore = this.itemsBeforeReorderingFeedback.map((item, index) => {
-            return this.$slots['item']({
-              item: item,
-              index: index,
-              reorder: false
-            })[0];
-          });
-          if (itemsReorderingBefore.length > 0) {
-            defaultArr = defaultArr.concat(itemsReorderingBefore);
-          }
-
-          defaultArr.push(this.$slots['reordering-feedback']({
-            key: 'reordering-feedback',
-            item: this.items[this.fromIndex]
-          })[0]);
-
-          const itemsReorderingAfter = this.itemsAfterReorderingFeedback.map((item, index) => {
-            return this.$slots['item']({
-              item: item,
-              index: this.itemsBeforeReorderingFeedback.length + index,
-              reorder: false
-            })[0];
-          });
-          if (itemsReorderingAfter.length > 0) {
-            defaultArr = defaultArr.concat(itemsReorderingAfter);
-          }
-        }
-        else {
-          const reorderedItems = this.reorderedItems.map((item, index) => {
-            return this.$slots['item']({
-              item: item,
-              index: index,
-              reorder: index === this.closestIndex
-            })[0];
-          });
-          if (reorderedItems.length > 0) {
-            defaultArr = defaultArr.concat(reorderedItems);
-          }
-        }
-      }
-      else {
-        const itemsBefore = this.itemsBeforeFeedback.map((item, index) => {
-          return this.$slots['item']({
-            item: item,
-            index: index,
-            reorder: false
-          })[0];
-        });
-        if (itemsBefore.length > 0) {
-          defaultArr = defaultArr.concat(itemsBefore);
-        }
-
-        defaultArr.push(this.$slots['feedback']({
-          key: 'drag-feedback',
-          data: this.dragData,
-          type: this.dragType
-        })[0]);
-
-        const itemsAfter = this.itemsAfterFeedback.map((item, index) => {
-          return this.$slots['item']({
-            item: item,
-            index: this.itemsBeforeFeedback.length + index,
-            reorder: false
-          })[0];
-        });
-        if (itemsAfter.length > 0) {
-          defaultArr = defaultArr.concat(itemsAfter);
-        }
-      }
-    }
-    else {
-      const defaultItems = this.items.map((item, index) => {
-        return this.$slots['item']({
-          item: item,
-          index: index,
-          reorder: false
-        })[0];
-      });
-
-      if (defaultItems.length > 0) {
-        defaultArr = defaultArr.concat(defaultItems);
-      }
-      else if (this.hasEmptySlot) {
-        defaultArr.push(this.$slots['empty']()[0]);
-      }
-    }
-
-    if (this.showDragFeedback) {
-      defaultArr.push(h(
-        script$1,
-        {
-          class: '__feedback',
-          ref: 'feedback',
-          key: 'drag-feedback'
+    return image;
+  };
+  __decorate(
+    [
+      Prop({
+        default: function () {
+          return function () {
+            return true;
+          };
         },
-        {
-          default: () => this.$slots['feedback']({
-            type: this.dragType,
-            data: this.dragData
-          })[0]
-        }
-      ));
-    }
-
-    if (this.showReorderingDragImage) {
-      defaultArr.push(h(
-        'div',
-        {
-          class: '__drag-image',
-          ref: 'drag-image',
-          key: 'reordering-drag-image'
+        type: [String, Array, Function],
+      }),
+      __metadata("design:type", Object),
+    ],
+    DropMixin.prototype,
+    "acceptsType",
+    void 0
+  );
+  __decorate(
+    [
+      Prop({
+        default: function () {
+          return true;
         },
-        {
-          default: () => this.$slots['reordering-drag-image']({
-            item: this.items[this.fromIndex]
-          })[0]
-        }
-      ));
-    }
+        type: Function,
+      }),
+      __metadata("design:type", Object),
+    ],
+    DropMixin.prototype,
+    "acceptsData",
+    void 0
+  );
+  __decorate(
+    [Prop({ default: "copy" }), __metadata("design:type", String)],
+    DropMixin.prototype,
+    "mode",
+    void 0
+  );
+  __decorate(
+    [Prop({ default: 0.7, type: Number }), __metadata("design:type", Object)],
+    DropMixin.prototype,
+    "dragImageOpacity",
+    void 0
+  );
+  DropMixin = __decorate(
+    [Component({}), __metadata("design:paramtypes", [])],
+    DropMixin
+  );
+  return DropMixin;
+})(DragAwareMixin);
 
-    if (this.showInsertingDragImage) {
-      defaultArr.push(h(
-        'div',
-        {
-          class: '__drag-image',
-          ref: 'drag-image',
-          key: 'inserting-drag-image'
-        },
-        {
-          default: () => this.$slots['drag-image']({
-            type: this.dragType,
-            data: this.dragData
-          })[0]
-        }
-      ));
-    }
-
-    return h(
-      this.rootTag,
-      {
-        ref: 'component',
-        class: this.clazz,
-        ...this.rootProps
-      },
-      {
-        default: () => defaultArr
-      }
-    );
+var Drop = /** @class */ (function (_super) {
+  __extends(Drop, _super);
+  function Drop() {
+    return (_super !== null && _super.apply(this, arguments)) || this;
   }
-};
+  Object.defineProperty(Drop.prototype, "showDragImage", {
+    get: function () {
+      return (
+        this.dragInProgress &&
+        this.typeAllowed &&
+        this.$scopedSlots["drag-image"]
+      );
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  __decorate(
+    [
+      Prop({ default: "div", type: [String, Object, Function] }),
+      __metadata("design:type", Object),
+    ],
+    Drop.prototype,
+    "tag",
+    void 0
+  );
+  Drop = __decorate([Component({})], Drop);
+  return Drop;
+})(DropMixin);
 
-script.__scopeId = "data-v-81374b54";
+/* script */
+var __vue_script__$1 = Drop;
+
+/* template */
+var __vue_render__$1 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    _vm.tag,
+    _vm._g(
+      _vm._b(
+        {
+          tag: "component",
+          class: _vm.cssClasses,
+          style: _vm.cssStyle,
+          scopedSlots: _vm._u(
+            [
+              _vm._l(_vm.$scopedSlots, function (_, slot) {
+                return {
+                  key: slot,
+                  fn: function (scope) {
+                    return [_vm._t(slot, null, null, scope)];
+                  },
+                };
+              }),
+            ],
+            null,
+            true
+          ),
+        },
+        "component",
+        _vm.$attrs,
+        false
+      ),
+      _vm.$listeners
+    ),
+    [
+      _vm._t("default"),
+      _vm._v(" "),
+      _vm._v(" "),
+      _vm.showDragImage
+        ? _c(
+            "div",
+            { ref: "drag-image", staticClass: "__drag-image" },
+            [
+              _vm._t("drag-image", null, {
+                type: _vm.dragType,
+                data: _vm.dragData,
+              }),
+            ],
+            2
+          )
+        : _vm._e(),
+    ],
+    2
+  );
+};
+var __vue_staticRenderFns__$1 = [];
+
+/* style */
+var __vue_inject_styles__$1 = function (inject) {
+  if (!inject) {
+    return;
+  }
+  inject("data-v-1d9169a9_0", {
+    source:
+      ".drop-allowed.drop-in,.drop-allowed.drop-in *{cursor:pointer!important}.drop-forbidden.drop-in,.drop-forbidden.drop-in *{cursor:no-drop!important}",
+    map: undefined,
+    media: undefined,
+  }),
+    inject("data-v-1d9169a9_1", {
+      source:
+        ".__drag-image[data-v-1d9169a9]{position:fixed;top:-10000px;left:-10000px;will-change:left,top}",
+      map: undefined,
+      media: undefined,
+    });
+};
+/* scoped */
+var __vue_scope_id__$1 = "data-v-1d9169a9";
+/* module identifier */
+var __vue_module_identifier__$1 = undefined;
+/* functional template */
+var __vue_is_functional_template__$1 = false;
+/* style inject SSR */
+
+var Drop$1 = normalizeComponent_1(
+  { render: __vue_render__$1, staticRenderFns: __vue_staticRenderFns__$1 },
+  __vue_inject_styles__$1,
+  __vue_script__$1,
+  __vue_scope_id__$1,
+  __vue_is_functional_template__$1,
+  __vue_module_identifier__$1,
+  browser,
+  undefined
+);
+
+var DropMask = /** @class */ (function (_super) {
+  __extends(DropMask, _super);
+  function DropMask() {
+    var _this = (_super !== null && _super.apply(this, arguments)) || this;
+    _this.isDropMask = true;
+    return _this;
+  }
+  DropMask.prototype.mounted = function () {
+    var el = this.$el;
+    var comp = this;
+    el.addEventListener("easy-dnd-move", onMouseMove);
+    function onMouseMove(e) {
+      dnd.mouseMove(e, comp);
+    }
+  };
+  DropMask.prototype.createDragImage = function () {
+    return "source";
+  };
+  __decorate(
+    [
+      Prop({ default: "div", type: [String, Object, Function] }),
+      __metadata("design:type", Object),
+    ],
+    DropMask.prototype,
+    "tag",
+    void 0
+  );
+  DropMask = __decorate([Component({})], DropMask);
+  return DropMask;
+})(DragAwareMixin);
+
+/* script */
+var __vue_script__$2 = DropMask;
+
+/* template */
+var __vue_render__$2 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    _vm.tag,
+    _vm._g(
+      _vm._b(
+        {
+          tag: "component",
+          scopedSlots: _vm._u(
+            [
+              _vm._l(_vm.$scopedSlots, function (_, slot) {
+                return {
+                  key: slot,
+                  fn: function (scope) {
+                    return [_vm._t(slot, null, null, scope)];
+                  },
+                };
+              }),
+            ],
+            null,
+            true
+          ),
+        },
+        "component",
+        _vm.$attrs,
+        false
+      ),
+      _vm.$listeners
+    ),
+    [_vm._t("default")],
+    2
+  );
+};
+var __vue_staticRenderFns__$2 = [];
+
+/* style */
+var __vue_inject_styles__$2 = undefined;
+/* scoped */
+var __vue_scope_id__$2 = undefined;
+/* module identifier */
+var __vue_module_identifier__$2 = undefined;
+/* functional template */
+var __vue_is_functional_template__$2 = false;
+/* style inject */
+
+/* style inject SSR */
+
+var DropMask$1 = normalizeComponent_1(
+  { render: __vue_render__$2, staticRenderFns: __vue_staticRenderFns__$2 },
+  __vue_inject_styles__$2,
+  __vue_script__$2,
+  __vue_scope_id__$2,
+  __vue_is_functional_template__$2,
+  __vue_module_identifier__$2,
+  undefined,
+  undefined
+);
 
 /**
  * This class reacts to drag events emitted by the dnd object to manage a sequence of drag images and fade from one to the
  * other as the drag progresses.
  */
-class DragImagesManager {
-
-    selfTransform = null;
-    clones = null;
-    source = null;
-    sourcePos = null;
-    sourceClone = null;
-
-    constructor () {
-      dnd.on('dragstart', this.onDragStart.bind(this));
-      dnd.on('dragtopchanged', this.onDragTopChanged.bind(this));
-      dnd.on('dragpositionchanged', this.onDragPositionChanged.bind(this));
-      dnd.on('dragend', this.onDragEnd.bind(this));
-    }
-
-    onDragStart (event) {
-      // If go-back=true and it is still animating while they attempt another drag,
-      //      it will bug out. Best to clean up any existing elements on the page before
-      //      attempting to start the next animation
-      this.cleanUp();
-
-      this.sourcePos = {
-        x: event.source.$el.getBoundingClientRect().left,
-        y: event.source.$el.getBoundingClientRect().top
-      };
-      this.selfTransform = 'translate(-' + (event.position.x - this.sourcePos.x) + 'px, -' + (event.position.y - this.sourcePos.y) + 'px)';
-      this.clones = new Map();
-      this.source = event.source;
-    }
-
-    onDragEnd (event) {
-      nextTick()
-        .then(() => {
-          if (!event.success && this.source && this.source['goBack']) {
-            // Restore the drag image that is active when hovering outside any drop zone :
-            const img = this.switch(null);
-    
-            // Move it back to its original place :
-            window.requestAnimationFrame(() => {
-              img.style.transition = 'all 0.5s';
-              window.requestAnimationFrame(() => {
-                img.style.left = this.sourcePos.x + 'px';
-                img.style.top = this.sourcePos.y + 'px';
-                img.style.transform = 'translate(0,0)';
-                const handler = () => {
-                  this.cleanUp();
-                  img.removeEventListener('transitionend', handler);
-                };
-                img.addEventListener('transitionend', handler);
-              });
-            });
-          }
-          else {
-            this.cleanUp();
-          }
+var DragImagesManager = /** @class */ (function (_super) {
+  __extends(DragImagesManager, _super);
+  function DragImagesManager() {
+    var _this = _super.call(this) || this;
+    _this.selfTransform = null;
+    _this.clones = null;
+    _this.source = null;
+    _this.sourcePos = null;
+    _this.sourceClone = null;
+    dnd.on("dragstart", _this.onDragStart);
+    dnd.on("dragtopchanged", _this.onDragTopChanged);
+    dnd.on("dragpositionchanged", _this.onDragPositionChanged);
+    dnd.on("dragend", _this.onDragEnd);
+    return _this;
+  }
+  DragImagesManager.prototype.onDragStart = function (event) {
+    // If go-back=true and it is still animating while they attempt another drag,
+    //      it will bug out. Best to clean up any existing elements on the page before
+    //      attempting to start the next animation
+    this.cleanUp();
+    this.sourcePos = {
+      x: event.source.$el.getBoundingClientRect().left,
+      y: event.source.$el.getBoundingClientRect().top,
+    };
+    this.selfTransform =
+      "translate(-" +
+      (event.position.x - this.sourcePos.x) +
+      "px, -" +
+      (event.position.y - this.sourcePos.y) +
+      "px)";
+    this.clones = new Map();
+    this.source = event.source;
+  };
+  DragImagesManager.prototype.onDragEnd = function (event) {
+    var _this = this;
+    Vue.nextTick(function () {
+      if (!event.success && _this.source && _this.source["goBack"]) {
+        // Restore the drag image that is active when hovering outside any drop zone :
+        var img_1 = _this.switch(null);
+        // Move it back to its original place :
+        window.requestAnimationFrame(function () {
+          img_1.style.transition = "all 0.5s";
+          window.requestAnimationFrame(function () {
+            img_1.style.left = _this.sourcePos.x + "px";
+            img_1.style.top = _this.sourcePos.y + "px";
+            img_1.style.transform = "translate(0,0)";
+            var handler = function () {
+              _this.cleanUp();
+              img_1.removeEventListener("transitionend", handler);
+            };
+            img_1.addEventListener("transitionend", handler);
+          });
         });
-    }
-
-    cleanUp () {
-      if (this.clones) {
-        this.clones.forEach((clone) => {
-          if (clone.parentNode === document.body) {
-            document.body.removeChild(clone);
-          }
-        });
+      } else {
+        _this.cleanUp();
       }
-      if (this.sourceClone !== null) {
-        if (this.sourceClone.parentNode === document.body) {
-          document.body.removeChild(this.sourceClone);
+    });
+  };
+  DragImagesManager.prototype.cleanUp = function () {
+    if (this.clones) {
+      this.clones.forEach(function (clone) {
+        if (clone.parentNode === document.body) {
+          document.body.removeChild(clone);
         }
-      }
-      this.selfTransform = null;
-      this.clones = null;
-      this.source = null;
-      this.sourceClone = null;
-      this.sourcePos = null;
-    }
-
-    onDragTopChanged (event) {
-      this.switch(event.top);
-    }
-
-    switch (top) {
-      this.clones.forEach(clone => {
-        clone.style.opacity = '0';
       });
-      if (this.sourceClone) {
-        this.sourceClone.style.opacity = '0';
+    }
+    if (this.sourceClone !== null) {
+      if (this.sourceClone.parentNode === document.body) {
+        document.body.removeChild(this.sourceClone);
       }
-
-      let activeClone;
-      if (top === null) {
-        activeClone = this.getSourceClone();
-      }
-      else {
-        if (!this.clones.has(top)) {
-          let clone = top['createDragImage'](this.selfTransform);
-          if (clone === 'source') {
-            clone = this.getSourceClone();
-          }
-          else if (clone !== null) {
-            clone.style.opacity = '0';
-            document.body.appendChild(clone);
-          }
-          this.clones.set(top, clone);
+    }
+    this.selfTransform = null;
+    this.clones = null;
+    this.source = null;
+    this.sourceClone = null;
+    this.sourcePos = null;
+  };
+  DragImagesManager.prototype.onDragTopChanged = function (event) {
+    this.switch(event.top);
+  };
+  DragImagesManager.prototype.switch = function (top) {
+    this.clones.forEach(function (clone) {
+      clone.style.opacity = "0";
+    });
+    if (this.sourceClone) {
+      this.sourceClone.style.opacity = "0";
+    }
+    var activeClone;
+    if (top === null) {
+      activeClone = this.getSourceClone();
+    } else {
+      if (!this.clones.has(top)) {
+        var clone = top["createDragImage"](this.selfTransform);
+        if (clone === "source") {
+          clone = this.getSourceClone();
+        } else if (clone !== null) {
+          clone.style.opacity = "0";
+          document.body.appendChild(clone);
         }
-        activeClone = this.clones.get(top);
+        this.clones.set(top, clone);
       }
-
-      if (activeClone !== null) {
-        activeClone.offsetWidth; // Forces browser reflow
-        activeClone.style.opacity = activeClone['__opacity'];
-        activeClone.style.visibility = 'visible';
-      }
-
-      return activeClone;
+      activeClone = this.clones.get(top);
     }
-
-    getSourceClone () {
-      if (this.sourceClone === null) {
-        this.sourceClone = this.source['createDragImage'](this.selfTransform);
-        this.sourceClone.style.opacity = '0';
-        document.body.appendChild(this.sourceClone);
-      }
-      return this.sourceClone;
+    if (activeClone !== null) {
+      activeClone.offsetWidth; // Forces browser reflow
+      activeClone.style.opacity = activeClone["__opacity"];
+      activeClone.style.visibility = "visible";
     }
-
-    onDragPositionChanged () {
-      this.clones.forEach((clone) => {
-        clone.style.left = dnd.position.x + 'px';
-        clone.style.top = dnd.position.y + 'px';
-      });
-      if (this.sourceClone) {
-        this.sourceClone.style.left = dnd.position.x + 'px';
-        this.sourceClone.style.top = dnd.position.y + 'px';
-      }
+    return activeClone;
+  };
+  DragImagesManager.prototype.getSourceClone = function () {
+    if (this.sourceClone === null) {
+      this.sourceClone = this.source["createDragImage"](this.selfTransform);
+      this.sourceClone.style.opacity = "0";
+      document.body.appendChild(this.sourceClone);
     }
-
-}
-
+    return this.sourceClone;
+  };
+  DragImagesManager.prototype.onDragPositionChanged = function (event) {
+    this.clones.forEach(function (clone) {
+      clone.style.left = dnd.position.x + "px";
+      clone.style.top = dnd.position.y + "px";
+    });
+    if (this.sourceClone) {
+      this.sourceClone.style.left = dnd.position.x + "px";
+      this.sourceClone.style.top = dnd.position.y + "px";
+    }
+  };
+  DragImagesManager = __decorate(
+    [
+      Component({}), // Necessary to set proper "this" context in event listeners.
+      __metadata("design:paramtypes", []),
+    ],
+    DragImagesManager
+  );
+  return DragImagesManager;
+})(Vue);
 new DragImagesManager();
 
-export { DnDEvent, script$4 as Drag, DragAwareMixin, script$1 as DragFeedback, DragImagesManager, DragMixin, script$3 as Drop, script as DropList, script$2 as DropMask, DropMixin, InsertEvent, ReorderEvent, createDragImage, dnd };
+var DragFeedback = /** @class */ (function (_super) {
+  __extends(DragFeedback, _super);
+  function DragFeedback() {
+    return (_super !== null && _super.apply(this, arguments)) || this;
+  }
+  DragFeedback = __decorate([Component({})], DragFeedback);
+  return DragFeedback;
+})(Vue);
+
+/* script */
+var __vue_script__$3 = DragFeedback;
+
+/* template */
+var __vue_render__$3 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c("div", { staticClass: "DragFeedback" }, [_vm._t("default")], 2);
+};
+var __vue_staticRenderFns__$3 = [];
+
+/* style */
+var __vue_inject_styles__$3 = undefined;
+/* scoped */
+var __vue_scope_id__$3 = "data-v-0589f3cb";
+/* module identifier */
+var __vue_module_identifier__$3 = undefined;
+/* functional template */
+var __vue_is_functional_template__$3 = false;
+/* style inject */
+
+/* style inject SSR */
+
+var DragFeedback$1 = normalizeComponent_1(
+  { render: __vue_render__$3, staticRenderFns: __vue_staticRenderFns__$3 },
+  __vue_inject_styles__$3,
+  __vue_script__$3,
+  __vue_scope_id__$3,
+  __vue_is_functional_template__$3,
+  __vue_module_identifier__$3,
+  undefined,
+  undefined
+);
+
+var Grid = /** @class */ (function () {
+  function Grid(collection, upToIndex, row, fromIndex) {
+    var e_1, _a;
+    this.magnets = [];
+    this.reference = collection.item(0).parentNode;
+    this.referenceOriginalPosition = {
+      x:
+        this.reference.getBoundingClientRect().left - this.reference.scrollLeft,
+      y: this.reference.getBoundingClientRect().top - this.reference.scrollTop,
+    };
+    var index = 0;
+    try {
+      for (
+        var collection_1 = __values(collection),
+          collection_1_1 = collection_1.next();
+        !collection_1_1.done;
+        collection_1_1 = collection_1.next()
+      ) {
+        var child = collection_1_1.value;
+        if (index > upToIndex) {
+          break;
+        }
+        var rect = child.getBoundingClientRect();
+        var hasNestedDrop =
+          child.classList.contains("dnd-drop") ||
+          child.getElementsByClassName("dnd-drop").length > 0;
+        var horizontal = null;
+        if (hasNestedDrop) {
+          if (row === "auto") {
+            // Auto mode not supported for now. Row or column must be defined explicitly if there are nested drop lists.
+            throw new Error(
+              "Easy-DnD error : a drop list is missing one of these attributes : 'row' or 'column'."
+            );
+          } else {
+            horizontal = row === "row";
+          }
+        }
+        if (fromIndex === null) {
+          // Inserting mode.
+          this.magnets.push(
+            hasNestedDrop ? this.before(rect, horizontal) : this.center(rect)
+          );
+        } else {
+          // Reordering mode.
+          this.magnets.push(
+            hasNestedDrop
+              ? (fromIndex < index ? this.after : this.before)(rect, horizontal)
+              : this.center(rect)
+          );
+        }
+        // Debug : show magnets :
+        //document.body.insertAdjacentHTML("beforeend", "<div style='background-color: red; position: fixed; width: 1px; height: 1px; top:" + this.magnets[index].y + "px; left:" + this.magnets[index].x + "px;' ></div>")
+        index++;
+      }
+    } catch (e_1_1) {
+      e_1 = { error: e_1_1 };
+    } finally {
+      try {
+        if (
+          collection_1_1 &&
+          !collection_1_1.done &&
+          (_a = collection_1.return)
+        ) {
+          _a.call(collection_1);
+        }
+      } finally {
+        if (e_1) {
+          throw e_1.error;
+        }
+      }
+    }
+  }
+  /**
+   * Returns the center of the rectangle.
+   */
+  Grid.prototype.center = function (rect) {
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
+  };
+  /**
+   * When horizontal is true / false, returns middle of the left / top side of the rectangle.
+   */
+  Grid.prototype.before = function (rect, horizontal) {
+    return horizontal
+      ? {
+          x: rect.left,
+          y: rect.top + rect.height / 2,
+        }
+      : {
+          x: rect.left + rect.width / 2,
+          y: rect.top,
+        };
+  };
+  /**
+   * When horizontal is true / false, returns middle of the right / bottom side of the rectangle.
+   */
+  Grid.prototype.after = function (rect, horizontal) {
+    return horizontal
+      ? {
+          x: rect.left + rect.width,
+          y: rect.top + rect.height / 2,
+        }
+      : {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height,
+        };
+  };
+  /**
+   * In case the user scrolls during the drag, the position of the magnets are not what they used to be when the drag
+   * started. A correction must be applied that takes into account the amount of scroll. This correction is the
+   * difference between the current position of the parent element and its position when the drag started.
+   */
+  Grid.prototype.correction = function () {
+    return {
+      x:
+        this.reference.getBoundingClientRect().left -
+        this.reference.scrollLeft -
+        this.referenceOriginalPosition.x,
+      y:
+        this.reference.getBoundingClientRect().top -
+        this.reference.scrollTop -
+        this.referenceOriginalPosition.y,
+    };
+  };
+  Grid.prototype.closestIndex = function (position) {
+    var x = position.x - this.correction().x;
+    var y = position.y - this.correction().y;
+    var minDist = 999999;
+    var index = -1;
+    for (var i = 0; i < this.magnets.length; i++) {
+      var magnet = this.magnets[i];
+      var dist = Math.sqrt(
+        Math.pow(magnet.x - x, 2) + Math.pow(magnet.y - y, 2)
+      );
+      if (dist < minDist) {
+        minDist = dist;
+        index = i;
+      }
+    }
+    return index;
+  };
+  return Grid;
+})();
+
+var DnDEvent = /** @class */ (function () {
+  function DnDEvent() {}
+  return DnDEvent;
+})();
+var ReorderEvent = /** @class */ (function () {
+  function ReorderEvent(from, to) {
+    this.from = from;
+    this.to = to;
+  }
+  ReorderEvent.prototype.apply = function (array) {
+    var tmp = array[this.from];
+    array.splice(this.from, 1);
+    array.splice(this.to, 0, tmp);
+  };
+  return ReorderEvent;
+})();
+var InsertEvent = /** @class */ (function () {
+  function InsertEvent(type, data, index) {
+    this.type = type;
+    this.data = data;
+    this.index = index;
+  }
+  return InsertEvent;
+})();
+
+var DropList = /** @class */ (function (_super) {
+  __extends(DropList, _super);
+  function DropList() {
+    var _this = (_super !== null && _super.apply(this, arguments)) || this;
+    _this.grid = null;
+    _this.forbiddenKeys = [];
+    _this.feedbackKey = null;
+    _this.fromIndex = null;
+    return _this;
+  }
+  Object.defineProperty(DropList.prototype, "rootTag", {
+    get: function () {
+      if (this.noAnimations) {
+        return this.tag ? this.tag : "div";
+      } else {
+        return "transition-group";
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "rootProps", {
+    get: function () {
+      if (this.noAnimations) {
+        return this.$attrs;
+      } else {
+        return {
+          tag: this.tag,
+          duration: { enter: 0, leave: 0 },
+          css: false,
+        };
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "rootListeners", {
+    get: function () {
+      if (this.noAnimations) {
+        return this.$listeners;
+      } else {
+        return {};
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  DropList.prototype.created = function () {
+    dnd.on("dragstart", this.onDragStart);
+    dnd.on("dragend", this.onDragEnd);
+  };
+  Object.defineProperty(DropList.prototype, "direction", {
+    get: function () {
+      if (this.row) {
+        return "row";
+      }
+      if (this.column) {
+        return "column";
+      }
+      return "auto";
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  DropList.prototype.beforeDestroy = function () {
+    dnd.off("dragstart", this.onDragStart);
+    dnd.off("dragend", this.onDragEnd);
+  };
+  // Presence of feedback node in the DOM and of keys in the virtual DOM required => delayed until what
+  // depends on drag data has been processed.
+  DropList.prototype.refresh = function () {
+    var _this = this;
+    this.$nextTick(function () {
+      _this.grid = _this.computeInsertingGrid();
+      _this.feedbackKey = _this.computeFeedbackKey();
+      _this.forbiddenKeys = _this.computeForbiddenKeys();
+    });
+  };
+  DropList.prototype.onDragStart = function (event) {
+    if (this.candidate(dnd.type, dnd.data, dnd.source)) {
+      if (this.reordering) {
+        this.fromIndex = Array.prototype.indexOf.call(
+          event.source.$el.parentElement.children,
+          event.source.$el
+        );
+        this.grid = this.computeReorderingGrid();
+      } else {
+        this.refresh();
+      }
+    }
+  };
+  DropList.prototype.onDragEnd = function () {
+    this.fromIndex = null;
+    this.feedbackKey = null;
+    this.forbiddenKeys = null;
+    this.grid = null;
+  };
+  Object.defineProperty(DropList.prototype, "reordering", {
+    get: function () {
+      if (dnd.inProgress) {
+        return (
+          dnd.source.$el.parentElement === this.$el &&
+          this.$listeners.hasOwnProperty("reorder")
+        );
+      } else {
+        return null;
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "closestIndex", {
+    get: function () {
+      if (this.grid) {
+        return this.grid.closestIndex(dnd.position);
+      } else {
+        return null;
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "dropAllowed", {
+    get: function () {
+      if (this.dragInProgress) {
+        if (this.reordering) {
+          return this.items.length > 1;
+        } else {
+          var superDropAllowed =
+            DropMixin["options"].computed.dropAllowed.get.call(this);
+          if (!superDropAllowed) {
+            return false;
+          } else {
+            if (this.forbiddenKeys !== null && this.feedbackKey !== null) {
+              return !this.forbiddenKeys.includes(this.feedbackKey);
+            } else {
+              return null;
+            }
+          }
+        }
+      } else {
+        return null;
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "itemsBeforeFeedback", {
+    get: function () {
+      if (this.closestIndex === 0) {
+        return [];
+      } else {
+        return this.items.slice(0, this.closestIndex);
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "itemsAfterFeedback", {
+    get: function () {
+      if (this.closestIndex === this.items.length) {
+        return [];
+      } else {
+        return this.items.slice(this.closestIndex);
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "itemsBeforeReorderingFeedback", {
+    get: function () {
+      if (this.closestIndex <= this.fromIndex) {
+        return this.items.slice(0, this.closestIndex);
+      } else {
+        return this.items.slice(0, this.closestIndex + 1);
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "itemsAfterReorderingFeedback", {
+    get: function () {
+      if (this.closestIndex <= this.fromIndex) {
+        return this.items.slice(this.closestIndex);
+      } else {
+        return this.items.slice(this.closestIndex + 1);
+      }
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "reorderedItems", {
+    get: function () {
+      var toIndex = this.closestIndex;
+      var reordered = __spread(this.items);
+      var temp = reordered[this.fromIndex];
+      reordered.splice(this.fromIndex, 1);
+      reordered.splice(toIndex, 0, temp);
+      return reordered;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "clazz", {
+    get: function () {
+      return __assign(
+        {
+          "drop-list": true,
+          reordering: this.reordering === true,
+          inserting: this.reordering === false,
+        },
+        this.reordering === false ? this.cssClasses : { "dnd-drop": true }
+      );
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "style", {
+    get: function () {
+      return __assign({}, this.reordering === false ? this.cssStyle : {});
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "showDragFeedback", {
+    get: function () {
+      return this.dragInProgress && this.typeAllowed && !this.reordering;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "showInsertingDragImage", {
+    get: function () {
+      return (
+        this.dragInProgress &&
+        this.typeAllowed &&
+        !this.reordering &&
+        this.$scopedSlots.hasOwnProperty("drag-image")
+      );
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(DropList.prototype, "showReorderingDragImage", {
+    get: function () {
+      return (
+        this.dragInProgress &&
+        this.reordering &&
+        this.$scopedSlots.hasOwnProperty("reordering-drag-image")
+      );
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  DropList.prototype.doDrop = function (event) {
+    if (this.reordering) {
+      if (this.fromIndex !== this.closestIndex) {
+        this.$emit(
+          "reorder",
+          new ReorderEvent(this.fromIndex, this.closestIndex)
+        );
+      }
+    } else {
+      DropMixin["options"].methods.doDrop.call(this, event);
+      this.$emit(
+        "insert",
+        new InsertEvent(event.type, event.data, this.closestIndex)
+      );
+    }
+  };
+  DropList.prototype.candidate = function (type, data, source) {
+    var _a;
+    var superCandidate = (_a =
+      DropMixin["options"].methods.candidate).call.apply(
+      _a,
+      __spread([this], arguments)
+    );
+    return (
+      (superCandidate &&
+        (this.$listeners.hasOwnProperty("insert") ||
+          this.$listeners.hasOwnProperty("drop"))) ||
+      this.reordering
+    );
+  };
+  DropList.prototype.computeForbiddenKeys = function () {
+    var vnodes = this.noAnimations
+      ? []
+      : this.$children[0].$vnode.context.$children[0].$slots.default;
+    return vnodes
+      .map(function (vn) {
+        return vn.key;
+      })
+      .filter(function (k) {
+        return k !== undefined && k !== "drag-image" && k !== "drag-feedback";
+      });
+  };
+  DropList.prototype.computeFeedbackKey = function () {
+    return this.$refs["feedback"]["$slots"]["default"][0]["key"];
+  };
+  Object.defineProperty(DropList.prototype, "hasReorderingFeedback", {
+    get: function () {
+      return this.$scopedSlots.hasOwnProperty("reordering-feedback");
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  DropList.prototype.computeInsertingGrid = function () {
+    var feedbackParent = this.$refs["feedback"]["$el"];
+    var feedback = feedbackParent.children[0];
+    var clone = feedback.cloneNode(true);
+    var tg = this.$el;
+    if (tg.children.length > this.items.length) {
+      tg.insertBefore(clone, tg.children[this.items.length]);
+    } else {
+      tg.appendChild(clone);
+    }
+    var grid = new Grid(tg.children, this.items.length, this.direction, null);
+    tg.removeChild(clone);
+    return grid;
+  };
+  DropList.prototype.computeReorderingGrid = function () {
+    var tg = this.$el;
+    return new Grid(
+      tg.children,
+      this.items.length - 1,
+      this.direction,
+      this.fromIndex
+    );
+  };
+  DropList.prototype.createDragImage = function () {
+    var image;
+    if (this.$refs["drag-image"]) {
+      var el = this.$refs["drag-image"];
+      var model = void 0;
+      if (el.childElementCount !== 1) {
+        model = el;
+      } else {
+        model = el.children.item(0);
+      }
+      var clone = model.cloneNode(true);
+      var tg = this.$el;
+      tg.appendChild(clone);
+      image = createDragImage(clone);
+      tg.removeChild(clone);
+      image["__opacity"] = this.dragImageOpacity;
+      image.classList.add("dnd-ghost");
+    } else {
+      image = "source";
+    }
+    return image;
+  };
+  __decorate(
+    [
+      Prop({ default: "div", type: [String, Object, Function] }),
+      __metadata("design:type", Object),
+    ],
+    DropList.prototype,
+    "tag",
+    void 0
+  );
+  __decorate(
+    [Prop(), __metadata("design:type", Array)],
+    DropList.prototype,
+    "items",
+    void 0
+  );
+  __decorate(
+    [Prop({ default: null }), __metadata("design:type", Boolean)],
+    DropList.prototype,
+    "row",
+    void 0
+  );
+  __decorate(
+    [
+      Prop({ default: null, type: Boolean }),
+      __metadata("design:type", Boolean),
+    ],
+    DropList.prototype,
+    "column",
+    void 0
+  );
+  __decorate(
+    [
+      Prop({ default: false, type: Boolean }),
+      __metadata("design:type", Boolean),
+    ],
+    DropList.prototype,
+    "noAnimations",
+    void 0
+  );
+  __decorate(
+    [
+      Prop({ type: Number, default: undefined }),
+      __metadata("design:type", Number),
+    ],
+    DropList.prototype,
+    "scrollingEdgeSize",
+    void 0
+  );
+  DropList = __decorate(
+    [
+      Component({
+        components: { DragFeedback: DragFeedback$1 },
+        inheritAttrs: false,
+      }),
+    ],
+    DropList
+  );
+  return DropList;
+})(DropMixin);
+
+/* script */
+var __vue_script__$4 = DropList;
+
+/* template */
+var __vue_render__$4 = function () {
+  var _vm = this;
+  var _h = _vm.$createElement;
+  var _c = _vm._self._c || _h;
+  return _c(
+    _vm.rootTag,
+    _vm._g(
+      _vm._b(
+        { tag: "component", class: _vm.clazz, style: _vm.style },
+        "component",
+        _vm.rootProps,
+        false
+      ),
+      _vm.rootListeners
+    ),
+    [
+      _vm.dropIn && _vm.dropAllowed
+        ? [
+            _vm.reordering
+              ? [
+                  _vm.hasReorderingFeedback
+                    ? [
+                        _vm._l(
+                          _vm.itemsBeforeReorderingFeedback,
+                          function (item, index) {
+                            return _vm._t("item", null, {
+                              item: item,
+                              index: index,
+                            });
+                          }
+                        ),
+                        _vm._v(" "),
+                        _vm._t("reordering-feedback", null, {
+                          item: _vm.items[_vm.fromIndex],
+                        }),
+                        _vm._v(" "),
+                        _vm._l(
+                          _vm.itemsAfterReorderingFeedback,
+                          function (item, index) {
+                            return _vm._t("item", null, {
+                              item: item,
+                              index:
+                                _vm.itemsBeforeReorderingFeedback.length +
+                                index,
+                            });
+                          }
+                        ),
+                      ]
+                    : [
+                        _vm._l(_vm.reorderedItems, function (item, index) {
+                          return _vm._t("item", null, {
+                            item: item,
+                            index: index,
+                            reorder: index === _vm.closestIndex,
+                          });
+                        }),
+                      ],
+                ]
+              : [
+                  _vm._l(_vm.itemsBeforeFeedback, function (item, index) {
+                    return _vm._t("item", null, {
+                      item: item,
+                      reorder: false,
+                      index: index,
+                    });
+                  }),
+                  _vm._v(" "),
+                  _vm._t("feedback", null, {
+                    data: _vm.dragData,
+                    type: _vm.dragType,
+                  }),
+                  _vm._v(" "),
+                  _vm._l(_vm.itemsAfterFeedback, function (item, index) {
+                    return _vm._t("item", null, {
+                      item: item,
+                      reorder: false,
+                      index: _vm.itemsBeforeFeedback.length + index,
+                    });
+                  }),
+                ],
+          ]
+        : [
+            _vm._l(_vm.items, function (item, index) {
+              return _vm._t("item", null, {
+                item: item,
+                reorder: false,
+                index: index,
+              });
+            }),
+            _vm._v(" "),
+            _vm.items.length < 1 ? _vm._t("empty") : _vm._e(),
+          ],
+      _vm._v(" "),
+      _vm.showDragFeedback
+        ? _c(
+            "drag-feedback",
+            {
+              key: "drag-feedback",
+              ref: "feedback",
+              staticClass: "__feedback",
+            },
+            [
+              _vm._t("feedback", null, {
+                data: _vm.dragData,
+                type: _vm.dragType,
+              }),
+            ],
+            2
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.showInsertingDragImage
+        ? _c(
+            "div",
+            {
+              key: "inserting-drag-image",
+              ref: "drag-image",
+              staticClass: "__drag-image",
+            },
+            [
+              _vm._t("drag-image", null, {
+                type: _vm.dragType,
+                data: _vm.dragData,
+              }),
+            ],
+            2
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.showReorderingDragImage
+        ? _c(
+            "div",
+            {
+              key: "reordering-drag-image",
+              ref: "drag-image",
+              staticClass: "__drag-image",
+            },
+            [
+              _vm._t("reordering-drag-image", null, {
+                item: _vm.items[_vm.fromIndex],
+              }),
+            ],
+            2
+          )
+        : _vm._e(),
+      _vm._v(" "),
+      _vm._t("default"),
+    ],
+    2
+  );
+};
+var __vue_staticRenderFns__$4 = [];
+
+/* style */
+var __vue_inject_styles__$4 = function (inject) {
+  if (!inject) {
+    return;
+  }
+  inject("data-v-228404f8_0", {
+    source:
+      ".drop-list[data-v-228404f8]>*{transition:transform .2s}.__feedback[data-v-228404f8]{display:none}.__drag-image[data-v-228404f8]{position:fixed;top:-10000px;left:-10000px;will-change:left,top}",
+    map: undefined,
+    media: undefined,
+  }),
+    inject("data-v-228404f8_1", {
+      source:
+        ".drop-allowed.drop-in *{cursor:inherit!important}.drop-forbidden.drop-in,.drop-forbidden.drop-in *{cursor:no-drop!important}",
+      map: undefined,
+      media: undefined,
+    });
+};
+/* scoped */
+var __vue_scope_id__$4 = "data-v-228404f8";
+/* module identifier */
+var __vue_module_identifier__$4 = undefined;
+/* functional template */
+var __vue_is_functional_template__$4 = false;
+/* style inject SSR */
+
+var DropList$1 = normalizeComponent_1(
+  { render: __vue_render__$4, staticRenderFns: __vue_staticRenderFns__$4 },
+  __vue_inject_styles__$4,
+  __vue_script__$4,
+  __vue_scope_id__$4,
+  __vue_is_functional_template__$4,
+  __vue_module_identifier__$4,
+  browser,
+  undefined
+);
+
+export {
+  DnDEvent,
+  Drag$1 as Drag,
+  DragAwareMixin,
+  DragImagesManager,
+  DragMixin,
+  Drop$1 as Drop,
+  DropList$1 as DropList,
+  DropMask$1 as DropMask,
+  DropMixin,
+  InsertEvent,
+  ReorderEvent,
+  createDragImage,
+  dnd,
+};
