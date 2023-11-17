@@ -1,54 +1,46 @@
 {
   "name": "vue-easy-dnd",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "rollup --config ./lib/rollup.config.js --environment BUILD:production"
+  "version": "1.22.0",
+  "description": "Easy-DnD is a drag and drop implementation for Vue.js 2 that uses only standard mouse events instead of the HTML5 drag and drop API, which is [impossible to work with](https://www.quirksmode.org/blog/archives/2009/09/the_html5_drag.html). Think of it as a way to transfer data from some components to others using the mouse or support for a mouse assisted copy/cut - paste. It also allows for lists to be reordred by drag and drop.",
+  "main": "./dist/vue-easy-dnd.ssr.js",
+  "module": "./dist/vue-easy-dnd.esm.js",
+  "browser": {
+    "./dist/vue-easy-dnd.ssr.js": "./dist/vue-easy-dnd.js"
   },
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
   "dependencies": {
-    "@babel/polyfill": "^7.4.4",
-    "@mdi/font": "^3.6.95",
-    "@segi/template": "file:lib",
-    "core-js": "^3.6.5",
-    "custom-event-polyfill": "^1.0.7",
-    "regenerator-runtime": "^0.13.7",
-    "roboto-fontface": "*",
     "vue": "^2.6.10",
-    "vue-class-component": "^7.2.3",
-    "vue-property-decorator": "^8.4.1",
-    "vuetify": "^2.1.13"
+    "vue-class-component": "^7.0.2",
+    "vue-property-decorator": "^8.1.0",
+    "reflect-metadata": "^0.1.13"
   },
-  "devDependencies": {
-    "@babel/preset-env": "^7.11.5",
-    "@vue/cli-plugin-babel": "^4.2.3",
-    "@vue/cli-plugin-typescript": "^4.2.3",
-    "@vue/cli-service": "^4.2.3",
-    "reflect-metadata": "^0.1.13",
-    "rollup": "^1.20.3",
-    "rollup-plugin-buble": "^0.19.8",
-    "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-cpy": "^2.0.1",
-    "rollup-plugin-node-resolve": "^5.2.0",
-    "rollup-plugin-sass": "^1.2.2",
-    "rollup-plugin-typescript2": "^0.24.1",
-    "rollup-plugin-vue": "^5.0.1",
-    "sass": "^1.18.0",
-    "sass-loader": "^7.1.0",
-    "tslib": "^1.10.0",
-    "typescript": "^3.8.3",
-    "vue-cli-plugin-vuetify": "^0.6.3",
-    "vue-template-compiler": "^2.6.10"
-  },
-  "postcss": {
-    "plugins": {
-      "autoprefixer": {}
-    }
-  },
+  "devDependencies": {},
   "browserslist": [
     "> 1%",
     "last 2 versions",
-    "not ie <= 10",
-    "ie 11"
-  ]
+    "not ie <= 10"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rlemaigre/Easy-DnD.git"
+  },
+  "keywords": [
+    "vue",
+    "vuejs",
+    "vue2",
+    "vuejs2",
+    "drag-and-drop",
+    "sortable",
+    "dnd"
+  ],
+  "author": "Régis Lemaigre <rlemaigre.github@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rlemaigre/Easy-DnD/issues"
+  },
+  "homepage": "https://github.com/rlemaigre/Easy-DnD#readme"
 }
