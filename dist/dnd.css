@@ -1,0 +1,65 @@
+.drop-allowed.drop-in, .drop-allowed.drop-in * {
+  cursor: pointer !important;
+}
+
+.drop-forbidden.drop-in, .drop-forbidden.drop-in * {
+  cursor: no-drop !important;
+}
+
+/* Places a drag image out of sight while keeping its computed styles accessibles. */
+.__drag-image[data-v-01f6c2c0] {
+  position: fixed;
+  top: -10000px;
+  left: -10000px;
+  will-change: left, top;
+}
+
+html.drag-in-progress * {
+  cursor: move !important;
+  cursor: grabbing !important;
+}
+
+.drop-allowed.drop-in * {
+  cursor: inherit !important;
+}
+
+.drop-forbidden.drop-in, .drop-forbidden.drop-in * {
+  cursor: no-drop !important;
+}
+
+.drag-no-handle:hover {
+  cursor: move;
+  cursor: grab;
+}
+
+/* Places a drag image out of sight while keeping its computed styles accessibles. */
+.__drag-image[data-v-36828a08] {
+  position: fixed;
+  top: -10000px;
+  left: -10000px;
+  will-change: left, top;
+}
+
+.drop-allowed.drop-in * {
+  cursor: inherit !important;
+}
+
+.drop-forbidden.drop-in, .drop-forbidden.drop-in * {
+  cursor: no-drop !important;
+}
+
+.drop-list[data-v-81374b54][data-v-81374b54] > * {
+  transition: transform 0.2s;
+}
+
+.__feedback[data-v-81374b54] {
+  display: none;
+}
+
+/* Places a drag image out of sight while keeping its computed styles accessibles. */
+.__drag-image[data-v-81374b54] {
+  position: fixed;
+  top: -10000px;
+  left: -10000px;
+  will-change: left, top;
+}
