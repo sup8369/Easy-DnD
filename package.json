@@ -7,9 +7,6 @@
   "browser": {
     "./dist/vue-easy-dnd.ssr.js": "./dist/vue-easy-dnd.js"
   },
-  "scripts": {
-    "build": "rollup --config ./rollup.config.js --environment BUILD:production"
-  },
   "types": "dist/index.d.ts",
   "files": [
     "dist",
