@@ -489,7 +489,7 @@ function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
     cancelScrollAction();
 
     if (adjustWindowScroll()) {
-      timer = setTimeout(checkForWindowScroll, 5);
+      timer = setTimeout(checkForWindowScroll, 3);
     }
   })();
 
@@ -522,7 +522,7 @@ function performEdgeScroll(event, container, clientX, clientY, edgeSize) {
     // gets the viewport edge. As such, we'll calculate the percentage that
     // the user has made it "through the edge" when calculating the delta.
     // Then, that use that percentage to back-off from the "max" step value.
-    var maxStep = 10;
+    var maxStep = 5;
 
     // Should we scroll left?
     if (isInLeftEdge && canScrollLeft) {
